@@ -1,0 +1,22 @@
+{
+	"name": "Bookmark New Tab",
+	"version": "0.0.0.1",
+	"description": "A New Tab replacement that shows the Bookmarks.",
+	"minimum_chrome_version": "8.0.0.0",
+	
+	"options_page": "options.html",
+	
+	"icons": { "16": "images/icon16.png",
+           "48": "images/icon48.png",
+          "128": "images/icon128.png" },
+	
+	"incognito": "spanning",
+	
+	"permissions": [
+		"bookmarks", "tabs", "chrome://favicon/", "management"
+	],
+	
+	"chrome_url_overrides": {
+		"newtab": "new_tab.html"
+	}
+}

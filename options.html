@@ -1,0 +1,32 @@
+<html>
+	<html>
+		
+		<title>Bookmarks New Tab - Options</title>
+		
+		<link rel="stylesheet" type="text/css" href="style.css" />
+		
+		<script src="libs/jquery.min.js"></script>
+		<script src="libs/jquery-ui.min.js"></script>
+		
+	</head>
+	<body>
+		<div class="optionsContainer">
+			<h2>Options</h2>
+			
+			Menu Type:
+			<select id="comboMenuType" style="width: 200px;" onchange="localStorage['menu_type'] = $(this).val();">
+				<option>hover</option>
+				<option>context_menu</option>
+			</select>
+		
+		</div>
+		
+		<script>
+			//To delete a localStorage entry.
+			//delete localStorage["TheKeyToMyStoredValue"];
+			
+			$("#comboMenuType").val(localStorage['menu_type']);
+		</script>
+	</body>
+</html>
+
