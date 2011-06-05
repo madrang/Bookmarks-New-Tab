@@ -26,13 +26,14 @@ function initTrees()
 	jQuery.jstree.THEMES_DIR = "libs/jsTree/themes/";
 	
 	var plugins = [
+		'core',
 		"themes",
-		"json_data",
-		"localStorage",
-		"crrm",
-		"contextmenu",
 		"ui",
-		"hotkeys"
+		"json",
+		"state"//,
+		//"crrm",
+		//"contextmenu",
+		//"hotkeys"
 	];
 	
 	var themes = {
@@ -74,12 +75,23 @@ function initTrees()
 		}
 	};
 	
+	var crrm = {
+			move: {
+				default_position: "first",
+				check_move: function (m) {
+						return (m.o[0].id === "thtml_1") ? false : true;
+				}
+			}
+	};
+	
 	$("body div.toolbar").jstree({
-		json_data: {
+		json: {
 			data: function(n, apply){
 				if(n === -1) {
 					chrome.bookmarks.getTree(function(bookmarksTree) {
-						apply(nodeTojsTree(bookmarksTree[0].children[0]));
+						var TreeChildArray = [];
+						TreeChildArray.push(nodeTojsTree(bookmarksTree[0].children[0]));
+						apply.call(this, TreeChildArray);
 					});
 					return;
 				}
@@ -95,30 +107,18 @@ function initTrees()
 				chrome.bookmarks.get(idArray, function(results){
 						for(i in results)
 							nodeArr.push(nodeTojsTree(results[i]));
-						complete = true;
 				});
-				
-				while(!complete){}
-				apply(nodeArr);
 				*/
-			},
-			progressive_render: true
+			}//,
+			//progressive_render: true
 			//progressive_unload: true
 		},
 		
-		/*crrm: {
-			move: {
-				default_position: "first",
-				check_move: function (m) {
-						return (m.o[0].id === "thtml_1") ? false : true;
-				}
-			}
-		},*/
+		//crrm: ccrm,
 		
-		localStorage: {
-			save_loaded: "body div.toolbar:loaded",
-			save_opened: "body div.toolbar:opened",
-			save_selected: "body div.toolbar:selected"
+		//Restore Node Open/Closed
+		state: {
+			key: "body div.toolbar:Tree"
 		},
 		
 		contextmenu: contextmenu,
@@ -128,23 +128,23 @@ function initTrees()
 	
 	$("body div.other").jstree({
 		//Node Data
-		json_data: {
+		json: {
 			data: function(n, apply){
 				if(n === -1) {
 					chrome.bookmarks.getTree(function(bookmarksTree) {
-						apply(nodeTojsTree(bookmarksTree[0].children[1]));
+						var TreeChildArray = [];
+						TreeChildArray.push(nodeTojsTree(bookmarksTree[0].children[1]));
+						apply.call(this, TreeChildArray);
 					});
 					return;
 				}
-			},
-			progressive_render: true
+			}//,
+			//progressive_render: true
 		},
 		
 		//Restore Node Open/Closed
-		localStorage: {
-			save_loaded: "body div.other:loaded",
-			save_opened: "body div.other:opened",
-			save_selected: "body div.other:selected"
+		state: {
+			key: "body div.other:Tree"
 		},
 		
 		contextmenu: contextmenu,
@@ -156,39 +156,40 @@ function initTrees()
 function nodeTojsTree(node)
 {
 	var treeNode = {
-			attr: { id: "li.node.id" + node.id },
+			title: node.title,
 			data: {
-				title: node.title,
-				attr: { }
-			}
+				jstree: {
+					//closed: true
+					//icon:false
+				}
+			},
+			li_attr: { id: "li.node.id" + node.id },
+			a_attr: {}
 		};
 	
 	//If url is NULL or missing, it is a folder.
 	if (node.url) {
-		treeNode.data.icon = "chrome://favicon/" + node.url;
-		treeNode.data.attr.href = node.url;
+		treeNode.data.jstree.icon = "chrome://favicon/" + node.url;
+		treeNode.a_attr.href = node.url;
 		return treeNode;
 	}
 	
-	treeNode.children = [];
 	var childs;
+	treeNode.data.jstree.children = [];
 	
 	if (node.children) {
 		childs = node.children;
 	}
 	/* else {
-		var complete;
 		var onChild = function(result){
 			childs = result;
-			complete = true;
 		};
 		chrome.bookmarks.getChildren(node.id, onChild);
-		while(!complete){}
 	}
 	*/
 	
 	for (var i in childs) {
-		treeNode.children.push(nodeTojsTree(childs[i]));
+		treeNode.data.jstree.children.push(nodeTojsTree(childs[i]));
 	}
 	
 	return treeNode;
