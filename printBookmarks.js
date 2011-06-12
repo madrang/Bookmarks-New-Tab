@@ -156,7 +156,7 @@ function initTrees()
 function nodeTojsTree(node)
 {
 	var treeNode = {
-			title: node.title,
+			title: (node.title != "") ? node.title : node.url,
 			data: {
 				jstree: {
 					//closed: true
@@ -195,6 +195,8 @@ function nodeTojsTree(node)
 	return treeNode;
 }
 
+
+// From before JsTree NOT USED ANYMORE.
 function removeBookmark(e)
 {	
 	if (e.data.node.children)
