@@ -52,6 +52,25 @@ Output:
 	};
 })(jQuery);
 
+/*
+Function: $.vakata.attributes
+Collects all attributes from a DOM node.
+*/
+(function ($) {
+	$.vakata.attributes = function(node, with_values) {
+		node = $(node)[0];
+		var attr = with_values ? {} : [];
+		$.each(node.attributes, function (i, v) { 
+			if($.inArray(v.nodeName.toLowerCase(),['style','contenteditable','hasfocus','tabindex']) !== -1) { return; }
+			if(v.nodeValue !== null && $.trim(v.nodeValue) !== '') { 
+				if(with_values) { attr[v.nodeName] = v.nodeValue; }
+				else { attr.push(v.nodeName); }
+			}
+		});
+		return attr;
+	};
+})(jQuery);
+
 /* 
 Group: CSS
 Functions needed to manipulate stylesheets (add, remove, change)
@@ -1181,12 +1200,13 @@ Functions for dealing with localStorage with fallback to userData or cookies. A 
 		}
 		else {
 			_storage_elm = document.createElement('link');
-			if(_storage_elm.addBehavior){
+			if(_storage_elm.addBehavior) {
 				_storage_elm.style.behavior = 'url(#default#userData)';
 				document.getElementsByTagName('head')[0].appendChild(_storage_elm);
+				alert(_storage_elm.load);
 				_storage_elm.load("jStorage");
 				var data = "{}";
-				try{
+				try {
 					data = _storage_elm.getAttribute("jStorage");
 				} catch(E5) {}
 				_storage_service.jStorage = data;

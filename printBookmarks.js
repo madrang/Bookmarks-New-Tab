@@ -1,7 +1,5 @@
 $(document).ready(initBookmarks);
 
-var NodeIdREG = /^li.node.id(\d+)/;
-
 function initBookmarks()
 {
 	var refreshTree = function(){
@@ -30,9 +28,9 @@ function initTrees()
 		"themes",
 		"ui",
 		"json",
-		"state"//,
+		"state",
 		//"crrm",
-		//"contextmenu",
+		"contextmenu"//,
 		//"hotkeys"
 	];
 	
@@ -46,42 +44,37 @@ function initTrees()
 		items:{
 			openLink: {
 				label: "Open Link",
-				action: function (node) {
-					var match = NodeIdREG.exec(node[0].id)
-						if(!(match && match[1]))
-							return;
-						
-						chrome.bookmarks.get(match[1], function(result){
-							if(result[0].url)
-								location.href = result[0].url;
-						});
+				action: function (data) {
+					var inst = $.jstree._reference(data.reference);
+					var obj = inst.get_node(data.reference);
+					var data = obj.data();
+					
+					if(data.chromeNode.url)
+						location.href = data.chromeNode.url;
 					},
 					separator_before: true
-				},
-				openLinkNewTab: {
-					label: "Open Link in New Tab",
-					action: function (node) {
-						var match = NodeIdREG.exec(node[0].id)
-						if(!(match && match[1]))
-							return;
-						
-						chrome.bookmarks.get(match[1], function(result){
-							if(result[0].url)
-								window.open(result[0].url, '', '');
-					});
+			},
+			openLinkNewTab: {
+				label: "Open Link in New Tab",
+				action: function (data) {
+					var inst = $.jstree._reference(data.reference);
+					var obj = inst.get_node(data.reference);
+					var data = obj.data();
+					
+					if(data.chromeNode.url)
+						window.open(data.chromeNode.url, '', '');
 				}
-				
 			}
 		}
 	};
 	
 	var crrm = {
-			move: {
-				default_position: "first",
-				check_move: function (m) {
-						return (m.o[0].id === "thtml_1") ? false : true;
-				}
+		move: {
+			default_position: "first",
+			check_move: function (m) {
+				return (m.o[0].id === "thtml_1") ? false : true;
 			}
+		}
 	};
 	
 	$("body div.toolbar").jstree({
@@ -161,7 +154,8 @@ function nodeTojsTree(node)
 				jstree: {
 					//closed: true
 					//icon:false
-				}
+				},
+				chromeNode: node
 			},
 			li_attr: { id: "li.node.id" + node.id },
 			a_attr: {}
@@ -169,7 +163,9 @@ function nodeTojsTree(node)
 	
 	//If url is NULL or missing, it is a folder.
 	if (node.url) {
-		treeNode.data.jstree.icon = "chrome://favicon/" + node.url;
+		//treeNode.data.jstree.icon = "chrome://favicon/" + node.url;
+		//treeNode.data.jstree.icon = "http://www.google.com/s2/favicons?domain=" + node.url;
+		treeNode.data.jstree.icon = "http://g.etfv.co/" + node.url;
 		treeNode.a_attr.href = node.url;
 		return treeNode;
 	}

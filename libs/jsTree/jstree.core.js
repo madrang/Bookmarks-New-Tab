@@ -86,7 +86,7 @@ Some static functions and variables, unless you know exactly what you are doing 
 			s.plugins = t;
 			i = parseInt(instances.push({}),10) - 1;
 			container
-				.data("jstree-instance-id", i)
+				.data("jstree_instance_id", i)
 				.addClass("jstree jstree-" + i);
 
 			this.data				= d;
@@ -141,7 +141,7 @@ Some static functions and variables, unless you know exactly what you are doing 
 			instance.get_container()
 				.unbind(".jstree")
 				.undelegate(".jstree")
-				.removeData("jstree-instance-id")
+				.removeData("jstree_instance_id")
 				.find("[class^='jstree']")
 					.andSelf()
 					.attr("class", function () { return this.className.replace(/jstree[^ ]*|$/ig,''); });
@@ -180,7 +180,7 @@ Some static functions and variables, unless you know exactly what you are doing 
 			var o = $(needle); 
 			if(!o.length && typeof needle === "string") { o = $("#" + needle); }
 			if(!o.length) { return null; }
-			return instances[o.closest(".jstree").data("jstree-instance-id")] || null; 
+			return instances[o.closest(".jstree").data("jstree_instance_id")] || null; 
 		},
 		/*
 			Function: $.jstree._focused
@@ -381,7 +381,7 @@ Some static functions and variables, unless you know exactly what you are doing 
 			this.get_container()
 				.bind("__construct.jstree", $.proxy(function () {
 						// defer, so that events bound AFTER creating the instance (like __ready) are still handled
-						setTimeout($.proxy(function () { this.init(); }, this), 0);
+						setTimeout($.proxy(function () { if(this) { this.init(); } }, this), 0);
 					}, this))
 				.bind("before.jstree", $.proxy(function (e, data) {
 						if(!/^is_locked|unlock$/.test(data.func) && this.data.core.locked) {
@@ -418,8 +418,9 @@ Some static functions and variables, unless you know exactly what you are doing 
 						else { if(window.getSelection) { var sel = window.getSelection(); try { sel.removeAllRanges(); sel.collapse(); } catch (er) { } } }
 					})
 				.delegate("li > ins", "click.jstree", $.proxy(function (e) {
-						var trgt = $(e.target);
-						if(trgt.is("ins") && e.pageY - trgt.offset().top < this.data.core.li_height) { this.toggle_node(trgt); }
+						// var trgt = $(e.target);
+						// if(trgt.is("ins") && e.pageY - trgt.offset().top < this.data.core.li_height) { this.toggle_node(trgt); }
+						this.toggle_node(e.target);
 					}, this));
 		},
 		__destruct : function () { 
@@ -1041,7 +1042,7 @@ Some static functions and variables, unless you know exactly what you are doing 
 				Function: clean_node
 				This function converts inserted nodes to the required by jsTree format. It takes care of converting a simple unodreder list to the internally used markup. 
 				The core calls this function automatically when new data arrives (by binding to the <load_node> event).
-				Each plugin may override this function to include its own markup, but keep in mind to do it like that:
+				Each plugin may override this function to include its own source, but keep in mind to do it like that:
 				> clean_node : function(obj) {
 				>  obj = this.__call_old();
 				>  obj.each(function () { 
@@ -1064,12 +1065,14 @@ Some static functions and variables, unless you know exactly what you are doing 
 					var t = $(this),
 						d = t.data("jstree"),
 						s = (d && d.opened) || t.hasClass("jstree-open") ? "open" : (d && d.closed) || t.children("ul").length ? "closed" : "leaf";
-					if(d && d.opened) { d.opened = false; }
-					if(d && d.closed) { d.closed = false; }
+					if(d && d.opened) { delete d.opened; }
+					if(d && d.closed) { delete d.closed; }
 					t.removeClass("jstree-open jstree-closed jstree-leaf jstree-last");
 					if(!t.children("a").length) { 
 						// allow for text and HTML markup inside the nodes
 						t.contents().filter(function() { return this.nodeType === 3 || this.tagName !== 'UL'; }).wrapAll('<a href="#"></a>');
+						// TODO: make this faster
+						t.children('a').html(t.children('a').html().replace(/[\s\t\n]+$/,''));
 					}
 					if(!t.children("ins.jstree-ocl").length) { 
 						t.prepend("<ins class='jstree-icon jstree-ocl'>&#160;</ins>");
@@ -1369,12 +1372,15 @@ Some static functions and variables, unless you know exactly what you are doing 
 				li	= $("<li />").attr(node.li_attr);
 				a	= $("<a />").attr(node.a_attr).html(node.title);
 				ul	= $("<ul />");
-				if(node.data) { li.data(node.data); }
+				if(node.data && !$.isEmptyObject(node.data)) { li.data(node.data); }
 				if(
 					node.children === true ||
 					$.isArray(node.children) || 
 					(li.data('jstree') && $.isArray(li.data('jstree').children))
 				) {
+					if(!li.data('jstree')) {
+						li.data('jstree', {});
+					}
 					li.data('jstree').closed = true;
 				}
 				li.append(a);
@@ -1385,6 +1391,72 @@ Some static functions and variables, unless you know exactly what you are doing 
 					li.append(ul);
 				}
 				return li;
+			},
+			/* 
+				Function: get_json
+				This function returns the whole tree (or a single node) in JSON format.
+				Each plugin may override this function to include its own source, but keep in mind to do it like that:
+				> get_json : function(obj, is_callback) {
+				>  var r = this.__call_old();
+				>  if(is_callback) {
+				>   if(<some-condition>) { r.data.jstree.<some-key> = <some-value-this-plugin-will-process>; }
+				>  }
+				>  return r;
+				> }
+
+				Parameters:
+					obj - *mixed* the input to parse
+					is_callback - do not modify this, jstree uses this parameter to keep track of the recursion
+
+				Returns:
+					Array - an array consisting of objects (one for each node)
+			*/
+			get_json : function (obj, is_callback) {
+				obj = typeof obj !== 'undefined' ? this.get_node(obj) : false;
+				if(!is_callback) {
+					if(!obj || obj === -1) { obj = this.get_container_ul().children("li"); }
+				}
+				var r, t, li_attr, a_attr;
+				if(!obj || !obj.length) { return false; }
+				if(obj.length > 1 || !is_callback) {
+					r = [];
+					t = this;
+					obj.each(function () {
+						r.push(t.get_json($(this), true));
+					});
+					return r;
+				}
+				li_attr = $.vakata.attributes(obj, true);
+				a_attr = $.vakata.attributes(obj.children('a'), true);
+				$.each(li_attr, function (i, v) {
+					if(i == 'id') { return true; }
+					li_attr[i] = $.trim(v.replace(/ jstree[^ ]*/ig,'').replace(/\s+$/ig," "));
+				});
+				$.each(a_attr, function (i, v) {
+					if(i == 'id') { return true; }
+					li_attr[i] = $.trim(v.replace(/ jstree[^ ]*/ig,'').replace(/\s+$/ig," "));
+				});
+				r = { 
+					'title'		: this.get_text(obj), 
+					'data'		: $.extend(true, {}, obj.data() || {}), 
+					'children'	: false, 
+					'li_attr'	: li_attr, 
+					'a_attr'	: a_attr 
+				};
+
+				if(!r.data.jstree) { r.data.jstree = {}; }
+				if(this.is_open(obj)) { r.data.jstree.opened = true; }
+				if(this.is_closed(obj)) { r.data.jstree.closed = true; }
+
+				obj = obj.find('> ul > li');
+				if(obj.length) {
+					r.children = [];
+					t = this;
+					obj.each(function () {
+						r.children.push(t.get_json($(this), true));
+					});
+				}
+				return r;
 			},
 			/* 
 				Function: create_node
