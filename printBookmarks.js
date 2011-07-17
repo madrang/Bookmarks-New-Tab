@@ -38,13 +38,14 @@ function initBookmarks()
 	initTrees();
 }
 
-	// Traverse the bookmark tree, and print the folder and nodes.
 function initTrees()
 {
 	var ProgressiveRender = false;
 	var ProgressiveUnload = false;
 	
 	localStorage.jsTree_theme = localStorage.jsTree_theme || "default";
+	localStorage.jsTree_FaviconService = localStorage.jsTree_FaviconService || "chrome";
+	
 	jQuery.jstree.THEMES_DIR = "libs/jsTree/themes/";
 	
 	var plugins = [
@@ -181,6 +182,11 @@ function initTrees()
 	});
 }
 
+/* Favicon Service
+ * 
+ * http://g.etfv.co/
+ * */
+
 function nodeTojsTree(node)
 {
 	var treeNode = {
@@ -198,9 +204,17 @@ function nodeTojsTree(node)
 	
 	//If url is NULL or missing, it is a folder.
 	if (node.url) {
-		treeNode.data.jstree.icon = "chrome://favicon/" + node.url;
-		//treeNode.data.jstree.icon = "http://www.google.com/s2/favicons?domain=" + node.url;
-		//treeNode.data.jstree.icon = "http://g.etfv.co/" + node.url;
+		switch(localStorage.jsTree_FaviconService) {
+		case "chrome":
+			treeNode.data.jstree.icon = "chrome://favicon/" + node.url;
+			break;
+		case "google":
+			treeNode.data.jstree.icon = "http://www.google.com/s2/favicons?domain=" + node.url;
+			break;
+		default:
+			treeNode.data.jstree.icon = localStorage.jsTree_FaviconService + node.url;
+			break;
+		}
 		treeNode.a_attr.href = node.url;
 		return treeNode;
 	}
