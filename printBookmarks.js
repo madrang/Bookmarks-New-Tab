@@ -198,9 +198,9 @@ function nodeTojsTree(node)
 	
 	//If url is NULL or missing, it is a folder.
 	if (node.url) {
-		//treeNode.data.jstree.icon = "chrome://favicon/" + node.url;
+		treeNode.data.jstree.icon = "chrome://favicon/" + node.url;
 		//treeNode.data.jstree.icon = "http://www.google.com/s2/favicons?domain=" + node.url;
-		treeNode.data.jstree.icon = "http://g.etfv.co/" + node.url;
+		//treeNode.data.jstree.icon = "http://g.etfv.co/" + node.url;
 		treeNode.a_attr.href = node.url;
 		return treeNode;
 	}
