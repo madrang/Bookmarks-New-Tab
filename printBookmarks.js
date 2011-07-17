@@ -1,5 +1,26 @@
 $(document).ready(initBookmarks);
 
+(function ($) {
+	$.jstree.plugin("dblClick", {
+		__construct : function () { 
+			//this.data.dblClick.DATA = $(); 
+			
+			this.get_container()
+				.bind("dblclick.jstree", $.proxy(function (e) {
+						this.do_action(e);
+					}, this));
+		},
+		defaults : {
+			Action : function(e){}
+		},
+		_fn : { 
+			do_action : function (e) {
+				this.get_settings(true).dblClick.Action(e);
+			}
+		}
+	});
+})(jQuery);
+
 function initBookmarks()
 {
 	var refreshTree = function(){
@@ -20,6 +41,9 @@ function initBookmarks()
 	// Traverse the bookmark tree, and print the folder and nodes.
 function initTrees()
 {
+	var ProgressiveRender = false;
+	var ProgressiveUnload = false;
+	
 	localStorage.jsTree_theme = localStorage.jsTree_theme || "default";
 	jQuery.jstree.THEMES_DIR = "libs/jsTree/themes/";
 	
@@ -29,9 +53,10 @@ function initTrees()
 		"ui",
 		"json",
 		"state",
-		//"crrm",
-		"contextmenu"//,
-		//"hotkeys"
+		"crrm",
+		"contextmenu",
+		"hotkeys",
+		"dblClick"
 	];
 	
 	var themes = {
@@ -77,6 +102,13 @@ function initTrees()
 		}
 	};
 	
+	var dblClick = {
+			Action: function(e) {
+				if(e.target && e.target.href)
+					location.href = e.target.href;
+			}
+	};
+	
 	$("body div.toolbar").jstree({
 		json: {
 			data: function(n, apply){
@@ -102,19 +134,19 @@ function initTrees()
 							nodeArr.push(nodeTojsTree(results[i]));
 				});
 				*/
-			}//,
-			//progressive_render: true
-			//progressive_unload: true
+			},
+			progressive_render: ProgressiveRender,
+			progressive_unload: ProgressiveUnload
 		},
-		
-		//crrm: ccrm,
 		
 		//Restore Node Open/Closed
 		state: {
 			key: "body div.toolbar:Tree"
 		},
 		
+		crrm: crrm,
 		contextmenu: contextmenu,
+		dblClick: dblClick,
 		themes: themes,
 		plugins: plugins
 	});
@@ -131,8 +163,9 @@ function initTrees()
 					});
 					return;
 				}
-			}//,
-			//progressive_render: true
+			},
+			progressive_render: ProgressiveRender,
+			progressive_unload: ProgressiveUnload
 		},
 		
 		//Restore Node Open/Closed
@@ -140,7 +173,9 @@ function initTrees()
 			key: "body div.other:Tree"
 		},
 		
+		crrm: crrm,
 		contextmenu: contextmenu,
+		dblClick: dblClick,
 		themes: themes,
 		plugins: plugins
 	});
