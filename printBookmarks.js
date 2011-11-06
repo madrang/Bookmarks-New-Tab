@@ -3,8 +3,6 @@ $(document).ready(initBookmarks);
 (function ($) {
 	$.jstree.plugin("dblClick", {
 		__construct : function () { 
-			//this.data.dblClick.DATA = $(); 
-			
 			this.get_container()
 				.bind("dblclick.jstree", $.proxy(function (e) {
 						this.do_action(e);
@@ -21,10 +19,14 @@ $(document).ready(initBookmarks);
 	});
 })(jQuery);
 
+var refreshEnabled = true;
+
 function initBookmarks()
 {
 	var refreshTree = function(){
-		$(".jstree").jstree("refresh");
+		if(refreshEnabled) {
+			$(".jstree").jstree("refresh");
+		}
 	};
 	
 	// If something happend Refresh the Trees
@@ -48,69 +50,182 @@ function initTrees()
 	
 	jQuery.jstree.THEMES_DIR = "libs/jsTree/themes/";
 	
-	var plugins = [
-		'core',
-		"themes",
-		"ui",
-		"json",
-		"state",
-		"crrm",
-		"contextmenu",
-		"hotkeys",
-		"dblClick"
-	];
-	
-	var themes = {
-			theme: localStorage.jsTree_theme
-	};
-	
-	var contextmenu = {
-		select_node: true,
-		show_at_node: false,
-		items:{
-			openLink: {
-				label: "Open Link",
-				action: function (data) {
-					var inst = $.jstree._reference(data.reference);
-					var obj = inst.get_node(data.reference);
-					var data = obj.data();
+	var treeSetup = {
+		json: {
+			progressive_render: ProgressiveRender,
+			progressive_unload: ProgressiveUnload
+		},
+		
+		contextmenu: {
+			select_node: true,
+			show_at_node: false,
+			
+			items:{
+				create: {
+					separator_before: false,
+					separator_after: true,
 					
-					if(data.chromeNode.url)
-						location.href = data.chromeNode.url;
-					},
-					separator_before: true
-			},
-			openLinkNewTab: {
-				label: "Open Link in New Tab",
-				action: function (data) {
-					var inst = $.jstree._reference(data.reference);
-					var obj = inst.get_node(data.reference);
-					var data = obj.data();
+					icon: false,
+					label: "Create",
+					action: function (data) { }
+				},
+				rename: {
+					separator_before: false,
+					separator_after: false,
 					
-					if(data.chromeNode.url)
-						window.open(data.chromeNode.url, '', '');
+					icon: false,
+					label: "Rename",
+					action: function (data) {
+						var inst = $.jstree._reference(data.reference);
+						var obj = inst.get_node(data.reference);
+						var nodeData = obj.data();
+						invoke(function() {
+							var name = prompt("Bookmark title", nodeData.chromeNode.title);
+							if (name != null && name != "") {
+								inst.rename_node(obj, name);
+							}
+						});
+					}
+				},
+				remove: {
+					separator_before: false,
+					separator_after: false,
+					
+					icon: false,
+					label: "Delete",
+					action: function (data) {
+						var inst = $.jstree._reference(data.reference);
+						var obj = inst.get_node(data.reference);
+						var nodeData = obj.data();
+						
+						if (nodeData.chromeNode.children) {
+							invoke(function()
+							{
+								if (confirm("Delete folder?"))
+									inst.delete_node(obj);
+							});
+						} else inst.delete_node(obj);
+					}
+				},
+				ccp: {
+					separator_before: true,
+					separator_after: false,
+					
+					icon: false,
+					label: "Edit",
+					action: false,
+					
+					submenu: { 
+						cut: {
+							separator_before: false,
+							separator_after: false,
+							
+							icon: false,
+							label: "Cut",
+							action: function (data) { }
+						},
+						copy: {
+							separator_before: false,
+							separator_after: false,
+							
+							icon: false,
+							label: "Copy",
+							action: function (data) { }
+						},
+						paste: {
+							separator_before: false,
+							separator_after: false,
+							
+							icon: false,
+							label: "Paste",
+							action: function (data) { }
+						}
+					}
+				},
+				openLink: {
+					separator_before: false,
+					separator_after: false,
+					
+					icon: false,
+					label: "Open Link",
+					action: function (data) {
+						var inst = $.jstree._reference(data.reference);
+						var obj = inst.get_node(data.reference);
+						var nodeData = obj.data();
+						
+						if(nodeData.chromeNode.url)
+							location.href = nodeData.chromeNode.url;
+						},
+						separator_before: true
+				},
+				openLinkNewTab: {
+					separator_before: false,
+					separator_after: false,
+					
+					icon: false,
+					label: "Open Link in New Tab",
+					action: function (data) {
+						var inst = $.jstree._reference(data.reference);
+						var obj = inst.get_node(data.reference);
+						var nodeData = obj.data();
+						
+						if(nodeData.chromeNode.url)
+							window.open(nodeData.chromeNode.url, '', '');
+					}
 				}
 			}
-		}
-	};
-	
-	var crrm = {
-		move: {
-			default_position: "first",
-			check_move: function (m) {
-				return (m.o[0].id === "thtml_1") ? false : true;
-			}
-		}
-	};
-	
-	var dblClick = {
+		},
+		dblClick: {
 			Action: function(e) {
 				if(e.target && e.target.href)
 					location.href = e.target.href;
 			}
+		},
+		
+		themes: {
+			theme: localStorage.jsTree_theme
+		},
+		
+		plugins: [
+			'core',
+			"themes",
+			"ui",
+			
+			"json",
+			"state",
+			
+			"contextmenu",
+			
+			"hotkeys",
+			"dnd",
+			
+			"dblClick"
+		]
 	};
 	
-	$("body div.toolbar").jstree({
+	var renameNode = function (e, data) {
+		var nodeData = data.rslt.obj.data();
+		var changes = {
+			title: data.rslt.title
+		};
+		refreshEnabled = false;
+		chrome.bookmarks.update(nodeData.chromeNode.id, changes, function(){ refreshEnabled = true; });
+	};
+	
+	var deleteNode = function (e, data) {
+		var nodeData = data.rslt.obj.data();
+		refreshEnabled = false;
+		
+		var enableRefresh = function() { refreshEnabled = true; };
+		if (nodeData.chromeNode.children)
+			chrome.bookmarks.removeTree(nodeData.chromeNode.id, enableRefresh);
+		else
+			chrome.bookmarks.remove(nodeData.chromeNode.id, enableRefresh);
+	};
+	
+	/*--- Bookmarks toolbar ---*/
+	var bookmarksToolbar = $("body div.bookmarks-toolbar");
+	var toolSetup = {
 		json: {
 			data: function(n, apply){
 				if(n === -1) {
@@ -121,38 +236,22 @@ function initTrees()
 					});
 					return;
 				}
-				/*
-				var idArray = [];
-				for(i in n) {
-					var match = NodeIdREG.exec(n[i].id)
-					if(match && match[1])
-						idArray.push(match[1]);
-				}
-				var complete = false;
-				var nodeArr = [];
-				chrome.bookmarks.get(idArray, function(results){
-						for(i in results)
-							nodeArr.push(nodeTojsTree(results[i]));
-				});
-				*/
-			},
-			progressive_render: ProgressiveRender,
-			progressive_unload: ProgressiveUnload
+			}
 		},
 		
 		//Restore Node Open/Closed
 		state: {
-			key: "body div.toolbar:Tree"
-		},
-		
-		crrm: crrm,
-		contextmenu: contextmenu,
-		dblClick: dblClick,
-		themes: themes,
-		plugins: plugins
-	});
+			key: "body div.bookmarks-toolbar:Tree"
+		}
+	};
+	bookmarksToolbar.jstree($.extend(true, {}, treeSetup, toolSetup));
+	bookmarksToolbar.bind("rename_node.jstree", renameNode);
+	bookmarksToolbar.bind("delete_node.jstree", deleteNode);
 	
-	$("body div.other").jstree({
+	
+	/*--- Other bookmarks ---*/
+	var otherBookmarks = $("body div.other-bookmarks");
+	var otherSetup = {
 		//Node Data
 		json: {
 			data: function(n, apply){
@@ -164,22 +263,16 @@ function initTrees()
 					});
 					return;
 				}
-			},
-			progressive_render: ProgressiveRender,
-			progressive_unload: ProgressiveUnload
+			}
 		},
 		
 		//Restore Node Open/Closed
 		state: {
-			key: "body div.other:Tree"
-		},
-		
-		crrm: crrm,
-		contextmenu: contextmenu,
-		dblClick: dblClick,
-		themes: themes,
-		plugins: plugins
-	});
+			key: "body div.other-bookmarks:Tree"
+		}
+	};
+	otherBookmarks.jstree($.extend(true, {}, treeSetup, otherSetup));
+	otherBookmarks.bind("rename_node.jstree", renameNode);
 }
 
 /* Favicon Service
@@ -217,29 +310,27 @@ function nodeTojsTree(node)
 		}
 		treeNode.a_attr.href = node.url;
 		return treeNode;
-	}
-	
-	var childs;
-	treeNode.data.jstree.children = [];
-	
-	if (node.children) {
-		childs = node.children;
-	}
-	/* else {
-		var onChild = function(result){
-			childs = result;
+	} else {
+		var childs;
+		treeNode.data.jstree.children = [];
+		
+		var addChild = function(childs){
+			for (var i in childs) {
+				treeNode.data.jstree.children.push(nodeTojsTree(childs[i]));
+			}
 		};
-		chrome.bookmarks.getChildren(node.id, onChild);
-	}
-	*/
-	
-	for (var i in childs) {
-		treeNode.data.jstree.children.push(nodeTojsTree(childs[i]));
+		
+		if (node.children) {
+			addChild(node.children);
+		} else {
+			chrome.bookmarks.getChildren(node.id, addChild);
+		}
 	}
 	
 	return treeNode;
 }
 
+function invoke(e) { window.setTimeout(e, 1); }
 
 // From before JsTree NOT USED ANYMORE.
 function removeBookmark(e)

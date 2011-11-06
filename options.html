@@ -13,19 +13,17 @@
 		<div class="optionsContainer">
 			<h2>Options</h2>
 			
-			Menu Type:
-			<select id="comboMenuType" style="width: 200px;" onchange="localStorage['menu_type'] = $(this).val();">
-				<option>hover</option>
-				<option>context_menu</option>
+			JsTree Theme:
+			<select id="jsTreeTheme-Menu" style="width: 200px;" onchange="localStorage.jsTree_theme = $(this).val();">
+				<option>default</option>
+				<option>classic</option>
+				<option>apple</option>
 			</select>
 		
 		</div>
 		
 		<script>
-			//To delete a localStorage entry.
-			//delete localStorage["TheKeyToMyStoredValue"];
-			
-			$("#comboMenuType").val(localStorage['menu_type']);
+			$("#jsTreeTheme-Menu").val(localStorage.jsTree_theme);
 		</script>
 	</body>
 </html>
