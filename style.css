@@ -1,64 +1,75 @@
 body {
-	margin: 2em 2em 5em 3em;
 	font-family: Arial, sans-serif;
 	font-size: 10.5pt;
+	
+	margin-top: 0em;
+	margin-right: 2em;
+	margin-bottom: 5em;
+	margin-left: 3em;
+	
 	line-height: 130%;
 	overflow-x: hidden;
 }
 
-/*--- Bookmarks menu ---*/
-div.bookmarksContainer {
+img {
+	border: none;
+}
+
+/*--- Bookmarks Tree ---*/
+div.bookmarks-container {
 	max-width: 80em;
 	margin: 0 auto;
 }
 
-div.clearer {
-	visibility: hidden;
-	display: block;
-	height: 0;
-	content: ".";
-	clear: both;
-}
-
-div.toolbar {
+div.bookmarks-toolbar {
 	float: left;
 	width: 45%;
+	
 	margin-right: 5%;
+	margin-bottom: 20px;
 }
-div.other {
+div.other-bookmarks {
 	float: right;
 	width: 45%;
+	
 	margin-right: 5%;
+	margin-bottom: 20px;
 }
 
-h2.bookmarksHeader {
-	font-weight: normal;
-	margin-left: -20px;
-}
-
-/*--- Application menu ---*/
-
-div.app {
-	border-radius: 5px 5px 5px 5px;
-	border: 1px solid #EEE;
-	display: inline-block;
-	width: 135px;
-	margin-left: 5px;
-	margin-right: 5px;
-	font-size: 9pt;
-}
-
-div.app:hover {
-	-webkit-transition: background-color .5s;
-	background-color: #EEE;
-}
-
-a.appLabel {
-	border-radius: 10px;
-	font-weight: normal;
-	font-family: Helvetica, Arial, sans-serif;
-	font-size: 107%;
-	overflow: hidden;
-	padding: 111px 10px 10px;
+/*--- Dock Menu ---*/
+.dock {
+	position: relative;
+	height: 50px;
 	text-align: center;
+	
+	padding-bottom: 80px;
+}
+.dock-container {
+	position: absolute;
+	height: 50px;
+	padding-left: 20px;
+	
+	background: url(images/dock-bg.gif);
+	
+	border-bottom-right-radius: 10px 10px;
+	border-bottom-left-radius: 10px 10px;
+}
+a.dock-item {
+	display: block;
+	width: 40px;
+	color: #000;
+	position: absolute;
+	top: 0px;
+	text-align: center;
+	text-decoration: none;
+	font: bold 12px Arial, Helvetica, sans-serif;
+}
+.dock-item img {
+	border: none;
+	margin: 5px 10px 0px;
+	width: 100%;
+}
+.dock-item span {
+	display: none;
+	padding-left: 20px;
 }

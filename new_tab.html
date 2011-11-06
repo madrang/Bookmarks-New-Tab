@@ -8,6 +8,8 @@
 		<script src="libs/jquery.min.js"></script>
 		<script src="libs/jquery-ui.min.js"></script>
 		
+		<script src="libs/interface.js"></script>
+		
 		<script src="libs/jsTree/_lib/jquery.hotkeys.js"></script>
 		
 		<script src="libs/jsTree/vakata.js"></script>
@@ -18,6 +20,7 @@
 		<script src="libs/jsTree/jstree.ui.js"></script>
 		<script src="libs/jsTree/jstree.state.js"></script>
 		
+		<script src="libs/jsTree/jstree.dnd.js"></script>
 		<script src="libs/jsTree/jstree.contextmenu.js"></script>
 		
 		<script src="printBookmarks.js"></script>
@@ -26,28 +29,28 @@
 	</head>
 	<body>
 		
-		<!---<div class="option">
-			<a id="optionlink" href="options.html">Options</a>
-		</div>--->
-		
-		<div class="appsContainer">
-			<div class="apps">
-				<h2>Applications</h2>
-			</div>
-			<div class="clearer"></div>
+		<!--top dock -->
+		<div class="dock" id="dock">
+			<div class="dock-container">
+				<!---
+				<a class="dock-item" id="optionlink" href="options.html">
+					<img src="images/home.png" alt="home" />
+					<span>Options</span>
+				</a>
+				--->
+			</div> 
 		</div>
-		<br/>
-		<div class="bookmarksContainer">
-			<div class="toolbar">
+		
+		<div class="bookmarks-container" id="bookmarks-tree">
+			<div class="bookmarks-toolbar">
 				<h2>Bookmarks Toolbar</h2>
 			</div>
 			
-			<div id="otherBoomarks" class="other">
+			<div class="other-bookmarks">
 				<h2>Other Bookmarks</h2>
 			</div>
-			
-			<div class="clearer"></div>
 		</div>
+		
 	</body>
 </html>
 
