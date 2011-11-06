@@ -273,6 +273,7 @@ function initTrees()
 	};
 	otherBookmarks.jstree($.extend(true, {}, treeSetup, otherSetup));
 	otherBookmarks.bind("rename_node.jstree", renameNode);
+	otherBookmarks.bind("delete_node.jstree", deleteNode);
 }
 
 /* Favicon Service
