@@ -53,6 +53,31 @@ Output:
 })(jQuery);
 
 /*
+Function: $.vakata.array_unique
+Returns only the unique items from an array.
+
+Input:
+> $.vakata.array_unique(['c','a','a','b','c','b']);
+
+Output: 
+>['a', 'b', 'c']
+*/
+(function ($) {
+	$.vakata.array_unique = function(array) {
+		var a = [], i, j, l;
+		for(i = 0, l = array.length; i < l; i++) {
+			for(j = 0; j <= i; j++) {
+				if(array[i] === array[j]) {
+					break;
+				}
+			}
+			if(j === i) { a.push(array[i]); }
+		}
+		return a;
+	};
+})(jQuery);
+
+/*
 Function: $.vakata.attributes
 Collects all attributes from a DOM node.
 */
@@ -270,12 +295,20 @@ Functions needed to drag'n'drop elements
 			Used internally to trigger all necessary events.
 		*/
 		_trigger : function (event_name, e) {
-			$(document).triggerHandler("dnd_" + event_name + ".vakata", { 
-				"event"		: e,
+			var data = $.vakata.dnd._get();
+			data.event = e;
+			$(document).triggerHandler("dnd_" + event_name + ".vakata", data);
+		},
+		/* 
+			Function: $.vakata.dnd._get
+			Used internally to get all items for the drag event. Can be used by foreign code too.
+		*/
+		_get : function () {
+			return { 
 				"data"		: vakata_dnd.data,
 				"element"	: vakata_dnd.element,
 				"helper"	: vakata_dnd.helper
-			});
+			};
 		},
 		/* 
 			Function: $.vakata.dnd._clean
@@ -304,6 +337,23 @@ Functions needed to drag'n'drop elements
 		/* 
 			Function: $.vakata.dnd._scroll
 			Used internally to scroll hovered elements.
+
+			Triggers:
+			<dnd_scroll>
+
+			Event: dnd_scroll
+			Fires when a container is scrolled due to dragging near its edge. Triggered on the document, the event is fired in the *vakata* namespace.
+
+			Parameters:
+				data.event - the scrolled element
+				data.data - the data you supplied when calling <$.vakata.dnd.start>
+				data.element - the origin element
+				data.helper - the jquery extended drag-helper node (or false if it is not used)
+
+			Example:
+			>$(document).bind("dnd_start.vakata", function (e, data) {
+			>	// do something
+			>});
 		*/
 		_scroll : function (init_only) {
 			if(!vakata_dnd.scroll_e || (!vakata_dnd.scroll_l && !vakata_dnd.scroll_t)) {
@@ -315,8 +365,14 @@ Functions needed to drag'n'drop elements
 				return false;
 			}
 			if(init_only === true) { return false; }
-			vakata_dnd.scroll_e.scrollTop(vakata_dnd.scroll_e.scrollTop()  + vakata_dnd.scroll_t * $.vakata.dnd.settings.scroll_speed);
-			vakata_dnd.scroll_e.scrollLeft(vakata_dnd.scroll_e.scrollLeft() + vakata_dnd.scroll_l * $.vakata.dnd.settings.scroll_speed);
+
+			var i = vakata_dnd.scroll_e.scrollTop(), 
+				j = vakata_dnd.scroll_e.scrollLeft();
+			vakata_dnd.scroll_e.scrollTop(i + vakata_dnd.scroll_t * $.vakata.dnd.settings.scroll_speed);
+			vakata_dnd.scroll_e.scrollLeft(j + vakata_dnd.scroll_l * $.vakata.dnd.settings.scroll_speed);
+			if(i !== vakata_dnd.scroll_e.scrollTop() || j !== vakata_dnd.scroll_e.scrollLeft()) {
+				$.vakata.dnd._trigger("scroll", vakata_dnd.scroll_e);
+			}
 		},
 		/* 
 			Function: $.vakata.dnd.start
@@ -351,7 +407,7 @@ Functions needed to drag'n'drop elements
 				vakata_dnd.helper = $("<div id='vakata-dnd'></div>").html(html).css({
 					"display"		: "block", 
 					"margin"		: "0",
-					"padding"		: "4px 4px 4px 24px",
+					"padding"		: "0",
 					"position"		: "absolute",
 					"top"			: "-2000px",
 					"lineHeight"	: "16px",
@@ -503,7 +559,9 @@ Functions needed to drag'n'drop elements
 				>	// do something
 				>});
 			*/
-			$.vakata.dnd._trigger("stop", e);
+			if(vakata_dnd.is_drag) {
+				$.vakata.dnd._trigger("stop", e);
+			}
 			$.vakata.dnd._clean();
 		}
 	};
@@ -521,11 +579,9 @@ A function used to do XSLT transformations.
 		Parameters:
 			xml - *string* the source xml string
 			xsl - *string* the xsl string
-			callback - *function* this function is called in the global scope and is passed the result document
-		
+
 		Returns:
-			true - if the browser supports xslt tranfsormation with strings
-			false - if the browser does not support xslt transformations with strings
+			the transformed result (or _false_ on failure)
 
 		Example:
 		>// simple
@@ -535,44 +591,38 @@ A function used to do XSLT transformations.
 		>	this.some_process(res); 
 		>}, some_object);
 	*/
-	$.vakata.xslt = function (xml, xsl, callback) {
-		var rs = "", xm, xs, processor, support;
-		// TODO: IE9 no XSLTProcessor, no document.recalc
-		if(document.recalc) {
-			xm = document.createElement('xml');
-			xs = document.createElement('xml');
-			xm.innerHTML = xml;
-			xs.innerHTML = xsl;
-			$("body").append(xm).append(xs);
-			setTimeout( (function (xm, xs, callback) {
-				return function () {
-					callback.call(null, xm.transformNode(xs.XMLDocument));
-					setTimeout( (function (xm, xs) { return function () { $(xm).remove(); $(xs).remove(); }; })(xm, xs), 200);
-				};
-			})(xm, xs, callback), 100);
-			return true;
-		}
-		// TODO: IE9 no XSLTProcessor
-		if(typeof window.DOMParser !== "undefined" && typeof window.XMLHttpRequest !== "undefined" && typeof window.XSLTProcessor !== "undefined") {
-			processor = new XSLTProcessor();
-			support = $.isFunction(processor.transformDocument) ? (typeof window.XMLSerializer !== "undefined") : true;
-			if(!support) { return false; }
-			xml = new DOMParser().parseFromString(xml, "text/xml");
-			xsl = new DOMParser().parseFromString(xsl, "text/xml");
-			if($.isFunction(processor.transformDocument)) {
-				rs = document.implementation.createDocument("", "", null);
-				processor.transformDocument(xml, xsl, rs, null);
-				callback.call(null, new XMLSerializer().serializeToString(rs));
-				return true;
+	$.vakata.xslt = function (xml, xsl) {
+		var r = false, p, q, s;
+		// IE9
+		if(r === false && window.ActiveXObject) {
+			try {
+				r = new ActiveXObject("Msxml2.XSLTemplate");
+				q = new ActiveXObject("Msxml2.DOMDocument");
+				q.loadXML(xml);
+				s = new ActiveXObject("Msxml2.FreeThreadedDOMDocument");
+				s.loadXML(xsl);
+				r.stylesheet = s;
+				p = r.createProcessor();
+				p.input = q;
+				p.transform();
+				r = p.output;
 			}
-			else {
-				processor.importStylesheet(xsl);
-				rs = processor.transformToFragment(xml, document);
-				callback.call(null, $("<div />").append(rs).html());
-				return true;
-			}
+			catch (e) { }
 		}
-		return false;
+		xml = $.parseXML(xml);
+		xsl = $.parseXML(xsl);
+		// FF, Chrome
+		if(r === false && typeof (XSLTProcessor) != "undefined") {
+			p = new XSLTProcessor();
+			p.importStylesheet(xsl);
+			r = p.transformToFragment(xml, document);
+			r = $('<div />').append(r).html();
+		}
+		// OLD IE
+		if(r === false && typeof (xml.transformNode) != "undefined") {
+			r = xml.transformNode(xsl);
+		}
+		return r;
 	};
 })(jQuery);
 
@@ -1268,7 +1318,7 @@ Functions for dealing with localStorage with fallback to userData or cookies. A 
 			Variable: $.vakata.storage.version
 			*string* the version of jstorage used
 		*/
-		version: "0.1.5.0",
+		version: "0.1.5.2",
 		/* 
 			Function: $.vakata.storage.set
 			Set a key to a value
@@ -1333,7 +1383,7 @@ Functions for dealing with localStorage with fallback to userData or cookies. A 
 		flush : function(){
 			_storage = {};
 			_save();
-			try{ window.localStorage.clear(); } catch(E8) { }
+			// try{ window.localStorage.clear(); } catch(E8) { }
 			return true;
 		},
 		/* 
@@ -1392,4 +1442,127 @@ Functions for dealing with localStorage with fallback to userData or cookies. A 
 		}
 	};
 	_init();
+})(jQuery);
+
+/* 
+Group: PrettyDate
+Modifies time elements to a more human readable value. Taken from: https://github.com/zachleat/Humane-Dates/blob/master/src/humane.js
+*/
+(function ($) {
+	/* 
+		Variable: $.vakata.pretty_date
+		*object* holds all pretty-date related functions and properties.
+	*/
+	$.vakata.pretty_date = {
+		/* 
+			Variable: $.vakata.pretty_date.lang
+			*object* the localization to use.
+		*/
+		lang : {
+			ago: 'Ago',
+			from: 'From Now',
+			now: 'Just Now',
+			minute: 'Minute',
+			minutes: 'Minutes',
+			hour: 'Hour',
+			hours: 'Hours',
+			day: 'Day',
+			days: 'Days',
+			week: 'Week',
+			weeks: 'Weeks',
+			month: 'Month',
+			months: 'Months',
+			year: 'Year',
+			years: 'Years'
+		},
+		/* 
+			Function: $.vakata.pretty_date.parse
+			Parses the difference between to dates to a human readable string.
+
+			Parameters:
+				date - the date to calculate from (а string in this YYYY-MM-DDTHH:MM:SSZ format - UTC)
+				comareTo - the date to compare to (as date), if left empty the current date is used
+
+			Returns:
+				*mixed* - the formatted string on success or _null_ on error
+		*/
+		parse : function (date, compareTo) {
+			// remove the timezone (always use gmdate on server side)
+			date = new Date(date.replace(/-/g,"/").replace(/[TZ]/g," ").replace(/\+\d\d\:\d\d$/,''));
+			compareTo = compareTo || new Date();
+			var lang		= $.vakata.pretty_date.lang,
+				formats		= [
+					[60, lang.now],
+					[3600, lang.minute, lang.minutes, 60], // 60 minutes, 1 minute
+					[86400, lang.hour, lang.hours, 3600], // 24 hours, 1 hour
+					[604800, lang.day, lang.days, 86400], // 7 days, 1 day
+					[2628000, lang.week, lang.weeks, 604800], // ~1 month, 1 week
+					[31536000, lang.month, lang.months, 2628000], // 1 year, ~1 month
+					[Infinity, lang.year, lang.years, 31536000] // Infinity, 1 year
+				],
+				seconds		= (compareTo - date + compareTo.getTimezoneOffset() * 60000) / 1000,
+				normalize	= function (val, single) {
+								var margin = 0.1;
+								if(val >= single && val <= single * (1+margin)) {
+									return single;
+								}
+								return val;
+							},
+				token;
+
+			if(seconds < 0) {
+				seconds = Math.abs(seconds);
+				token = ' ' + lang.from;
+			}
+			else {
+				token = ' ' + lang.ago;
+			}
+
+			for(var i = 0, format = formats[0]; formats[i]; format = formats[++i]) {
+				if(seconds < format[0]) {
+					if(i === 0) {
+						return format[1];
+					}
+					var val = Math.ceil(normalize(seconds, format[3]) / (format[3]));
+					return val +
+							' ' +
+							(val != 1 ? format[2] : format[1]) +
+							(i > 0 ? token : '');
+				}
+			}
+		},
+		/* 
+			Function: $.vakata.pretty_date.init
+			Parses all time elements in the document and keeps reparsing them every few seconds.
+
+			Parameters:
+				i - the interval for reparsing (in seconds)
+				format - the format to use, example: _Published %{s}._. Default is _%{s}_.
+		*/
+		init : function (i, format) {
+			$("time").vakata_pretty_date(format);
+			setInterval(function(){ $("time").vakata_pretty_date(format); }, i || 5000);
+		}
+	};
+	/*
+	Function: $().vakata_pretty_date
+	Sets the HTML of every element to the parsed difference of its _datetime_ attribute and the compare parameter.
+
+		Parameters:
+			format - makes it possible to modify the parsed string, example: _Published %{s}._. Default is _%{s}_.
+			compare - the date to compare to. Default is the current date.
+	*/
+	$.fn.vakata_pretty_date = function (format, compare) {
+		if(!format) { format = '%{s}'; }
+		return this.each(function() {
+			var $t = jQuery(this),
+				date = $.vakata.pretty_date.parse($t.attr('datetime'), compare);
+			if(date) {
+				date = format.replace('%{s}', date);
+				if($t.html() != date) {
+					$t.html(date);
+				}
+			}
+		});
+	};
 })(jQuery);
