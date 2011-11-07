@@ -1,24 +1,5 @@
 $(document).ready(initBookmarks);
 
-(function ($) {
-	$.jstree.plugin("dblClick", {
-		__construct : function () { 
-			this.get_container()
-				.bind("dblclick.jstree", $.proxy(function (e) {
-						this.do_action(e);
-					}, this));
-		},
-		defaults : {
-			Action : function(e){}
-		},
-		_fn : { 
-			do_action : function (e) {
-				this.get_settings(true).dblClick.Action(e);
-			}
-		}
-	});
-})(jQuery);
-
 var refreshEnabled = true;
 
 function initBookmarks()
@@ -175,12 +156,6 @@ function initTrees()
 				}
 			}
 		},
-		dblClick: {
-			Action: function(e) {
-				if(e.target && e.target.href)
-					location.href = e.target.href;
-			}
-		},
 		
 		themes: {
 			theme: localStorage.jsTree_theme
@@ -197,9 +172,7 @@ function initTrees()
 			"contextmenu",
 			
 			"hotkeys",
-			"dnd",
-			
-			"dblClick"
+			"dnd"
 		]
 	};
 	
@@ -221,6 +194,17 @@ function initTrees()
 			chrome.bookmarks.removeTree(nodeData.chromeNode.id, enableRefresh);
 		else
 			chrome.bookmarks.remove(nodeData.chromeNode.id, enableRefresh);
+	};
+	
+	var dbClickNode = function (e, data) {
+		if(e.target && e.target.href) {
+			location.href = e.target.href;
+		} else {
+			var nodeData = data.rslt.obj.data();
+			if(nodeData.chromeNode.url) {
+				location.href = nodeData.chromeNode.url;
+			}
+		}
 	};
 	
 	/*--- Bookmarks toolbar ---*/
@@ -247,6 +231,7 @@ function initTrees()
 	bookmarksToolbar.jstree($.extend(true, {}, treeSetup, toolSetup));
 	bookmarksToolbar.bind("rename_node.jstree", renameNode);
 	bookmarksToolbar.bind("delete_node.jstree", deleteNode);
+	bookmarksToolbar.bind("dblclick.jstree", dbClickNode);
 	
 	
 	/*--- Other bookmarks ---*/
@@ -274,6 +259,7 @@ function initTrees()
 	otherBookmarks.jstree($.extend(true, {}, treeSetup, otherSetup));
 	otherBookmarks.bind("rename_node.jstree", renameNode);
 	otherBookmarks.bind("delete_node.jstree", deleteNode);
+	otherBookmarks.bind("dblclick.jstree", dbClickNode);
 }
 
 /* Favicon Service
