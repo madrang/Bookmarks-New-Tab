@@ -4,12 +4,6 @@ var refreshEnabled = true;
 
 function initBookmarks()
 {
-	var refreshTree = function(){
-		if(refreshEnabled) {
-			$(".jstree").jstree("refresh");
-		}
-	};
-	
 	// If something happend Refresh the Trees
 	chrome.bookmarks.onChanged.addListener(refreshTree);
 	chrome.bookmarks.onChildrenReordered.addListener(refreshTree);
@@ -18,11 +12,6 @@ function initBookmarks()
 	chrome.bookmarks.onMoved.addListener(refreshTree);
 	chrome.bookmarks.onRemoved.addListener(refreshTree);
 	
-	initTrees();
-}
-
-function initTrees()
-{
 	var ProgressiveRender = false;
 	var ProgressiveUnload = false;
 	
@@ -176,37 +165,6 @@ function initTrees()
 		]
 	};
 	
-	var renameNode = function (e, data) {
-		var nodeData = data.rslt.obj.data();
-		var changes = {
-			title: data.rslt.title
-		};
-		refreshEnabled = false;
-		chrome.bookmarks.update(nodeData.chromeNode.id, changes, function(){ refreshEnabled = true; });
-	};
-	
-	var deleteNode = function (e, data) {
-		var nodeData = data.rslt.obj.data();
-		refreshEnabled = false;
-		
-		var enableRefresh = function() { refreshEnabled = true; };
-		if (nodeData.chromeNode.children)
-			chrome.bookmarks.removeTree(nodeData.chromeNode.id, enableRefresh);
-		else
-			chrome.bookmarks.remove(nodeData.chromeNode.id, enableRefresh);
-	};
-	
-	var dbClickNode = function (e, data) {
-		if(e.target && e.target.href) {
-			location.href = e.target.href;
-		} else {
-			var nodeData = data.rslt.obj.data();
-			if(nodeData.chromeNode.url) {
-				location.href = nodeData.chromeNode.url;
-			}
-		}
-	};
-	
 	/*--- Bookmarks toolbar ---*/
 	var bookmarksToolbar = $("body div.bookmarks-toolbar");
 	var toolSetup = {
@@ -229,9 +187,7 @@ function initTrees()
 		}
 	};
 	bookmarksToolbar.jstree($.extend(true, {}, treeSetup, toolSetup));
-	bookmarksToolbar.bind("rename_node.jstree", renameNode);
-	bookmarksToolbar.bind("delete_node.jstree", deleteNode);
-	bookmarksToolbar.bind("dblclick.jstree", dbClickNode);
+	bindTreeEvents(bookmarksToolbar);
 	
 	
 	/*--- Other bookmarks ---*/
@@ -257,9 +213,50 @@ function initTrees()
 		}
 	};
 	otherBookmarks.jstree($.extend(true, {}, treeSetup, otherSetup));
-	otherBookmarks.bind("rename_node.jstree", renameNode);
-	otherBookmarks.bind("delete_node.jstree", deleteNode);
-	otherBookmarks.bind("dblclick.jstree", dbClickNode);
+	bindTreeEvents(otherBookmarks);
+}
+
+function refreshTree () {
+	if(refreshEnabled) {
+		$(".jstree").jstree("refresh");
+	}
+}
+
+function renameNode (e, data) {
+	var nodeData = data.rslt.obj.data();
+	var changes = {
+		title: data.rslt.title
+	};
+	refreshEnabled = false;
+	chrome.bookmarks.update(nodeData.chromeNode.id, changes, function(){ refreshEnabled = true; });
+}
+	
+function deleteNode (e, data) {
+	var nodeData = data.rslt.obj.data();
+	refreshEnabled = false;
+	
+	var enableRefresh = function() { refreshEnabled = true; };
+	if (nodeData.chromeNode.children)
+		chrome.bookmarks.removeTree(nodeData.chromeNode.id, enableRefresh);
+	else
+		chrome.bookmarks.remove(nodeData.chromeNode.id, enableRefresh);
+}
+	
+function dbClickNode (e, data) {
+	if(e.target && e.target.href) {
+		location.href = e.target.href;
+	} else {
+		var nodeData = data.rslt.obj.data();
+		if(nodeData.chromeNode.url) {
+			location.href = nodeData.chromeNode.url;
+		}
+	}
+}
+
+function bindTreeEvents (tree) {
+	tree.bind("rename_node.jstree", renameNode);
+	tree.bind("delete_node.jstree", deleteNode);
+	tree.bind("dblclick.jstree", dbClickNode);
 }
 
 /* Favicon Service
