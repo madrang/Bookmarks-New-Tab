@@ -317,22 +317,6 @@ function nodeTojsTree(node)
 function invoke(e) { window.setTimeout(e, 1); }
 
 // From before JsTree NOT USED ANYMORE.
-function removeBookmark(e)
-{	
-	if (e.data.node.children)
-	{
-		if (confirm("Delete folder?"))
-		{
-			chrome.bookmarks.removeTree(e.data.node.id);
-			$('ul#folder' + e.data.node.id).remove();
-			
-		} else return false;
-		
-	} else chrome.bookmarks.remove(e.data.node.id);
-	
-	$('li#' + e.data.node.id).remove();
-	$('li#edit' + e.data.node.id).remove();
-}
 
 function saveEdit(e)
 {
