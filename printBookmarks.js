@@ -2,6 +2,8 @@ $(document).ready(initBookmarks);
 
 var refreshEnabled = true;
 
+var btOkCancel = { Ok: true, Cancel: false };
+
 function initBookmarks()
 {
 	// If something happend Refresh the Trees
@@ -16,6 +18,8 @@ function initBookmarks()
 	var ProgressiveUnload = false;
 	
 	localStorage.jsTree_theme = localStorage.jsTree_theme || "default";
+	localStorage.jsTree_themeDots = localStorage.jsTree_theme || false;
+	
 	localStorage.jsTree_FaviconService = localStorage.jsTree_FaviconService || "chrome";
 	
 	jQuery.jstree.THEMES_DIR = "libs/jsTree/themes/";
@@ -37,7 +41,21 @@ function initBookmarks()
 					
 					icon: false,
 					label: "Create",
-					action: function (data) { }
+					action: function (data) {
+							var newBookmark = {
+								
+								parentId: e.data.node.id
+								
+							};
+							
+							newBookmark.title = $('li#add' + e.data.node.id + ' input[name=title]').val();
+							
+							var url = $('li#add' + e.data.node.id + ' input[name=url]').val();
+							if (!url.match(/^https?:\/\//)) url = 'http://' + url;
+							newBookmark.url = url;
+							chrome.bookmarks.create(newBookmark);
+							
+					}
 				},
 				rename: {
 					separator_before: false,
@@ -49,12 +67,23 @@ function initBookmarks()
 						var inst = $.jstree._reference(data.reference);
 						var obj = inst.get_node(data.reference);
 						var nodeData = obj.data();
-						invoke(function() {
-							var name = prompt("Bookmark title", nodeData.chromeNode.title);
+						
+						var rename = function(v,m,f) {
+							if(v !== true)
+								return;
+							
+							var name = f.newTile;
 							if (name != null && name != "") {
 								inst.rename_node(obj, name);
+								nodeData.chromeNode.title = name;
 							}
-						});
+						};
+						
+						var txt = 'Bookmark title:<br />' +
+							'<input type="text" id="newTitleInput" name="newTile" value="' + nodeData.chromeNode.title + '" />';
+						
+						$.prompt(txt, { buttons: btOkCancel, callback: rename });
+
 					}
 				},
 				remove: {
@@ -68,12 +97,13 @@ function initBookmarks()
 						var obj = inst.get_node(data.reference);
 						var nodeData = obj.data();
 						
+						//If childrens Prompt before deleting.
 						if (nodeData.chromeNode.children) {
-							invoke(function()
-							{
-								if (confirm("Delete folder?"))
+							var delFol = function(e) {
+								if (e === true)
 									inst.delete_node(obj);
-							});
+							};
+							$.prompt("Delete folder ?", { buttons: btOkCancel, callback: delFol });
 						} else inst.delete_node(obj);
 					}
 				},
@@ -147,7 +177,8 @@ function initBookmarks()
 		},
 		
 		themes: {
-			theme: localStorage.jsTree_theme
+			theme: localStorage.jsTree_theme,
+			dots: localStorage.jsTree_themeDots
 		},
 		
 		plugins: [
@@ -259,11 +290,6 @@ function bindTreeEvents (tree) {
 	tree.bind("dblclick.jstree", dbClickNode);
 }
 
-/* Favicon Service
- * 
- * http://g.etfv.co/
- * */
-
 function nodeTojsTree(node)
 {
 	var treeNode = {
@@ -314,10 +340,7 @@ function nodeTojsTree(node)
 	return treeNode;
 }
 
-function invoke(e) { window.setTimeout(e, 1); }
-
 // From before JsTree NOT USED ANYMORE.
-
 function saveEdit(e)
 {
 	var changes = new Object();
