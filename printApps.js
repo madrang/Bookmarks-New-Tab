@@ -3,6 +3,11 @@ $(document).ready(initApps);
 
 function initApps()
 {
+	chrome.management.onInstalled.addListener(printApps);
+	chrome.management.onUninstalled.addListener(printApps);
+	chrome.management.onEnabled.addListener(printApps);
+	chrome.management.onDisabled.addListener(printApps);
+	
 	printApps();
 }
 
