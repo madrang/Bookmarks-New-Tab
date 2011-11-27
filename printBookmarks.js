@@ -325,6 +325,10 @@ function nodeTojsTree(node)
 			a_attr: {}
 		};
 	
+	// Open 'Bookmarks Bar' and 'Other Bookmarks'
+	if(node.id == 1 || node.id == 2)
+		treeNode.data.jstree.closed = false;
+	
 	//If url is NULL or missing, it is a folder.
 	if (node.url) {
 		if(treeNode.title == null || treeNode.title == "")
