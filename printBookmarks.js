@@ -42,19 +42,36 @@ function initBookmarks()
 					icon: false,
 					label: "Create",
 					action: function (data) {
+						var inst = $.jstree._reference(data.reference);
+						var obj = inst.get_node(data.reference);
+						var nodeData = obj.data();
+						
+						var create = function(v,m,f) {
+							if(v !== true || f.newTitle == null || f.newTitle == "")
+								return;
+							
 							var newBookmark = {
-								
-								parentId: e.data.node.id
-								
+								title: f.newTitle
 							};
 							
-							newBookmark.title = $('li#add' + e.data.node.id + ' input[name=title]').val();
+							if(nodeData.chromeNode.url) {
+								newBookmark.parentId = nodeData.chromeNode.parentId;
+							} else {
+								newBookmark.parentId = nodeData.chromeNode.id;
+							}
 							
-							var url = $('li#add' + e.data.node.id + ' input[name=url]').val();
-							if (!url.match(/^https?:\/\//)) url = 'http://' + url;
-							newBookmark.url = url;
-							chrome.bookmarks.create(newBookmark);
+							if(f.newUrl != null && f.newUrl != "")
+								newBookmark.url = normalizeUrl(f.newUrl);
 							
+							chrome.bookmarks.create(newBookmark, refreshTree);
+						};
+						
+						var txt = 'Title:<br />' +
+							'<input type="text" id="newTitleInput" name="newTitle" /><br />' +
+							'Url:<br />' +
+							'<input type="text" id="newUrlInput" name="newUrl" />';
+						
+						$.prompt(txt, { buttons: btOkCancel, callback: create });
 					}
 				},
 				rename: {
@@ -340,6 +357,15 @@ function nodeTojsTree(node)
 	return treeNode;
 }
 
+function normalizeUrl(url)
+{
+	if (!url.match(/^https?:\/\//)) {
+		return 'http://' + url;
+	} else {
+		return url;
+	}
+}
+
 // From before JsTree NOT USED ANYMORE.
 function saveEdit(e)
 {
@@ -359,25 +385,4 @@ function saveEdit(e)
 	chrome.bookmarks.update(e.data.node.id, changes);
 	
 	$('li#edit' + e.data.node.id).remove();
-}
-
-function doAdd(e)
-{
-	var newBookmark = new Object();
-	
-	newBookmark.parentId = e.data.node.id;
-	
-	newBookmark.title = $('li#add' + e.data.node.id + ' input[name=title]').val();
-	//$('li#' + e.data.node.id + ' span.title').html( newBookmark.title );
-	
-	var url = $('li#add' + e.data.node.id + ' input[name=url]').val();
-	if (!url.match(/^https?:\/\//)) url = 'http://' + url;
-	newBookmark.url = url;
-	//$('li#' + e.data.node.id + ' a:first').attr('href', url);
-	
-	chrome.bookmarks.create(newBookmark);
-	
-	$('li#add' + e.data.node.id).remove();
-	
-	printBookmarks();
 }
