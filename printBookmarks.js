@@ -89,15 +89,19 @@ function initBookmarks()
 							if(v !== true)
 								return;
 							
-							var name = f.newTile;
-							if (name != null && name != "") {
-								inst.rename_node(obj, name);
-								nodeData.chromeNode.title = name;
+							if(f.newTitle == null)
+								f.newTitle = "";
+							
+							if (f.newTitle != "") {
+								inst.rename_node(obj, f.newTitle);
+							} else {
+								inst.rename_node(obj, nodeData.chromeNode.url);
 							}
+							nodeData.chromeNode.title = f.newTitle;
 						};
 						
-						var txt = 'Bookmark title:<br />' +
-							'<input type="text" id="newTitleInput" name="newTile" value="' + nodeData.chromeNode.title + '" />';
+						var txt = 'Title:<br />' +
+							'<input type="text" id="newTitleInput" name="newTitle" value="' + nodeData.chromeNode.title + '" />';
 						
 						$.prompt(txt, { buttons: btOkCancel, callback: rename });
 
