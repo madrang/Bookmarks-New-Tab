@@ -310,10 +310,9 @@ function bindTreeEvents (tree) {
 function nodeTojsTree(node)
 {
 	var treeNode = {
-			title: (node.title != "") ? node.title : node.url,
+			title: node.title,
 			data: {
 				jstree: {
-					//closed: true
 					//icon:false
 				},
 				chromeNode: node
@@ -324,6 +323,9 @@ function nodeTojsTree(node)
 	
 	//If url is NULL or missing, it is a folder.
 	if (node.url) {
+		if(treeNode.title == null || treeNode.title == "")
+			treeNode.title = node.url;
+		
 		switch(localStorage.jsTree_FaviconService) {
 		case "chrome":
 			treeNode.data.jstree.icon = "chrome://favicon/" + node.url;
