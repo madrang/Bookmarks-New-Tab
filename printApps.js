@@ -16,15 +16,20 @@ function printApps()
 	$('body div.dock-container').empty();
 	
 	// Add other menu items.
-	$('body div.dock-container').append('<a class="dock-item" id="optionlink" href="options.html">' +
-		'<img src="images/Wrench_White.png" alt="home" />' +
-		'<span>Options</span>' +
-		'</a>');
 	
+	var OptionItem = {
+		Id: "optionlink",
+		Url: "options.html",
+		Icon: "images/Wrench_White.png",
+		Title: "Options"
+	};
+	addLink(OptionItem);
+
+	//Add chrome extensions to dock.
 	var func = function(extensions) {
 		for (var i in extensions) {
 			if(extensions[i].isApp)
-				$('body div.dock-container').append(builDockItem(extensions[i]));
+				$('body div.dock-container').append(addChromeExt(extensions[i]));
 		}
 		
 		$('#dock').Fisheye(
@@ -39,20 +44,32 @@ function printApps()
 			}
 		)
 	};
-	
 	chrome.management.getAll(func);
 }
 
-function builDockItem(extInf)
+function addLink(node)
+{
+	$('body div.dock-container').append('<a class="dock-item" id="' + node.Id + '" href="' + node.Url + '">' +
+		'<img src="' + node.Icon + '" />' +
+		'<span>' + node.Title + '</span>' +
+		'</a>');
+}
+
+function addChromeExt(extInf)
 {
 	var item = $('<a id="' + extInf.id + '" class="dock-item"></a>');
 	
-	//App icon
-	var img = (extInf.icons) ?
-		//(extInf.enabled) is false dim im gray.
-		$('<img id="img_'+ extInf.id +'" src="' + getBiggerImg(extInf.icons).url + '"/>')
+	var img;
+	if(extInf.icons) {
+		var extImgUrl = getBiggerImg(extInf.icons).url;
+		if(!extInf.enabled) {
+			extImgUrl = extImgUrl + '?grayscale=true';
+		}
+		img = $('<img id="img_'+ extInf.id +'" src="' + extImgUrl + '"/>');
+	} else {
 		//Default icon.
-		: $('');
+		img = $('');
+	}
 	
 	item.append(img);
 	item.append($('<span>' + extInf.name + '</span>'));
