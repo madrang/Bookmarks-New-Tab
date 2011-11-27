@@ -124,7 +124,8 @@ function initBookmarks()
 								if (e === true)
 									inst.delete_node(obj);
 							};
-							$.prompt("Delete folder ?", { buttons: btOkCancel, callback: delFol });
+							$.prompt('Do you want to delete "' + nodeData.chromeNode.title + '" ?',
+								{ buttons: btOkCancel, callback: delFol });
 						} else inst.delete_node(obj);
 					}
 				},
