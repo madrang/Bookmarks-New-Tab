@@ -73,3 +73,32 @@ a.dock-item {
 	display: none;
 	padding-left: 20px;
 }
+
+/*
+ * About
+ * */
+#warrentlogo {
+	width: 370px;
+	height: 275px;
+	
+	padding: 48px 3px 3px 3px;
+	margin: 5px;
+	
+	border: 1px solid #EEE;
+	border-radius: 5px 5px 5px 5px;
+	box-shadow: #577AA2 0 0 10px;
+}
+
+li.logo {
+	display: inline;
+	
+	width: 215px;
+	height: 55px;
+	
+	padding: 48px 3px 3px 3px;
+	margin: 5px;
+	
+	border: 1px solid #EEE;
+	border-radius: 5px 5px 5px 5px;
+	box-shadow: #577AA2 0 0 10px;
+}
