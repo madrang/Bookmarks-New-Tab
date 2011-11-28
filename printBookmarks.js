@@ -97,10 +97,20 @@ function initBookmarks()
 							
 							if (f.newTitle != "") {
 								inst.rename_node(obj, f.newTitle);
-							} else {
-								inst.rename_node(obj, nodeData.chromeNode.url);
+								nodeData.chromeNode.title = f.newTitle;
+								return;
 							}
-							nodeData.chromeNode.title = f.newTitle;
+							
+							//Allow empty name only for Bookmarks folders.
+							if (nodeData.chromeNode.url != "") {
+								inst.rename_node(obj, nodeData.chromeNode.url);
+								nodeData.chromeNode.title = f.newTitle;
+								return;
+							}
+							
+							//Can't rename node.
+							//TODO Warn the user.
+							return;
 						};
 						
 						var txt = 'Title:<br />' +
