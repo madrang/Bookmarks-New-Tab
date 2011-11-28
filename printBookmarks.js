@@ -331,7 +331,7 @@ function nodeTojsTree(node)
 	
 	// Open 'Bookmarks Bar' and 'Other Bookmarks'
 	if(node.id == 1 || node.id == 2)
-		treeNode.data.jstree.closed = false;
+		treeNode.data.jstree.opened = true;
 	
 	//If url is NULL or missing, it is a folder.
 	if (node.url) {
