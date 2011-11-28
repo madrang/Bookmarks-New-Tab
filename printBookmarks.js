@@ -205,7 +205,7 @@ function initBookmarks()
 						var nodeData = obj.data();
 						
 						if(nodeData.chromeNode.url)
-							window.open(nodeData.chromeNode.url, '', '');
+							window.open(nodeData.chromeNode.url);
 					}
 				}
 			}
@@ -314,7 +314,11 @@ function dbClickNode (e) {
 	var nodeData = obj.data();
 	
 	if(nodeData.chromeNode.url) {
-		location.href = nodeData.chromeNode.url;
+		if(e.ctrlKey) {
+			window.open(nodeData.chromeNode.url);
+		} else {
+			location.href = nodeData.chromeNode.url;
+		}
 	} else {
 		//Is a folder, open or close.
 		if(inst.is_open(obj))
