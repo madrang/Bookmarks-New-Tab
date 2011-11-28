@@ -308,21 +308,31 @@ function deleteNode (e, data) {
 		chrome.bookmarks.remove(nodeData.chromeNode.id, enableRefresh);
 }
 	
-function dbClickNode (e, data) {
-	if(e.target && e.target.href) {
-		location.href = e.target.href;
+function dbClickNode (e) {
+	var inst = $.jstree._reference(e.reference);
+	var obj = inst.get_node(e.reference);
+	var nodeData = obj.data();
+	
+	if(nodeData.chromeNode.url) {
+		location.href = nodeData.chromeNode.url;
 	} else {
-		var nodeData = data.rslt.obj.data();
-		if(nodeData.chromeNode.url) {
-			location.href = nodeData.chromeNode.url;
-		}
+		//Is a folder, open or close.
+		if(inst.is_open(obj))
+			inst.close_node(obj);
+		else
+			inst.open_node(obj);
 	}
+	e.stopPropagation();
 }
 
 function bindTreeEvents (tree) {
 	tree.bind("rename_node.jstree", renameNode);
 	tree.bind("delete_node.jstree", deleteNode);
-	tree.bind("dblclick.jstree", dbClickNode);
+	
+	tree.find("ul li").live("dblclick", function(e) {
+		e.reference = this;
+		dbClickNode(e);
+	});
 }
 
 function nodeTojsTree(node)
