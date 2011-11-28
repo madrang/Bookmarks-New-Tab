@@ -14,6 +14,7 @@ function initBookmarks()
 	chrome.bookmarks.onMoved.addListener(refreshTree);
 	chrome.bookmarks.onRemoved.addListener(refreshTree);
 	
+	//Currently not supported.
 	var ProgressiveRender = false;
 	var ProgressiveUnload = false;
 	
@@ -62,6 +63,8 @@ function initBookmarks()
 							
 							if(f.newUrl != null && f.newUrl != "")
 								newBookmark.url = normalizeUrl(f.newUrl);
+							
+							//TODO use jstree.create_node() instead of refreshTree
 							
 							chrome.bookmarks.create(newBookmark, refreshTree);
 						};
@@ -346,7 +349,11 @@ function nodeTojsTree(node)
 			treeNode.data.jstree.icon = localStorage.jsTree_FaviconService + node.url;
 			break;
 		}
+		
+		//Only used to show the link to the user.
+		//Not used when opening the link.
 		treeNode.a_attr.href = node.url;
+		
 		return treeNode;
 	} else {
 		var childs;
@@ -375,25 +382,4 @@ function normalizeUrl(url)
 	} else {
 		return url;
 	}
-}
-
-// From before JsTree NOT USED ANYMORE.
-function saveEdit(e)
-{
-	var changes = new Object();
-	
-	changes.title = $('li#edit' + e.data.node.id + ' input[name=title]').val();
-	$('li#' + e.data.node.id + ' span.title').html( changes.title );
-	
-	if (!e.data.node.children)
-	{
-		var url = $('li#edit' + e.data.node.id + ' input[name=url]').val();
-		if (!url.match(/^https?:\/\//)) url = 'http://' + url;
-		changes.url = url;
-		$('li#' + e.data.node.id + ' a:first').attr('href', url);
-	}
-		
-	chrome.bookmarks.update(e.data.node.id, changes);
-	
-	$('li#edit' + e.data.node.id).remove();
 }
