@@ -18,11 +18,13 @@ function initBookmarks()
 	var ProgressiveRender = false;
 	var ProgressiveUnload = false;
 	
+	//Check settings.
 	localStorage.jsTree_theme = localStorage.jsTree_theme || "default";
-	localStorage.jsTree_themeDots = localStorage.jsTree_theme || false;
+	localStorage.jsTree_themeDots = localStorage.jsTree_themeDots || false;
 	
 	localStorage.jsTree_FaviconService = localStorage.jsTree_FaviconService || "chrome";
 	
+	//Set theme path.
 	jQuery.jstree.THEMES_DIR = "libs/jsTree/themes/";
 	
 	var treeSetup = {
