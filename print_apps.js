@@ -1,4 +1,3 @@
-
 $(document).ready(initApps);
 
 function initApps()
@@ -16,6 +15,15 @@ function printApps()
 	$('body div.dock-container').empty();
 	
 	// Add other menu items.
+	/*
+	var AboutItem = {
+		Id: "aboutlink",
+		Url: "about.html",
+		Icon: "images/About_White.png",
+		Title: "About"
+	};
+	addLink(AboutItem);
+	*/
 	
 	var OptionItem = {
 		Id: "optionlink",

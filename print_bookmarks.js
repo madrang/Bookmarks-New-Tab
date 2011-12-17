@@ -25,7 +25,7 @@ function initBookmarks()
 	localStorage.jsTree_FaviconService = localStorage.jsTree_FaviconService || "chrome";
 	
 	//Set theme path.
-	jQuery.jstree.THEMES_DIR = "libs/jsTree/themes/";
+	jQuery.jstree.THEMES_DIR = "libs/jstree/themes/";
 	
 	var treeSetup = {
 		json: {
@@ -331,9 +331,14 @@ function dbClickNode (e) {
 	e.stopPropagation();
 }
 
+function moveNode (e, data) {
+	alert("Moved `" + data.inst.get_text(data.rslt.obj) + "` inside `" + (data.rslt.parent === -1 ? 'the main container' : data.inst.get_text(data.rslt.parent)) + "` at index " + data.rslt.position);
+}
+
 function bindTreeEvents (tree) {
 	tree.bind("rename_node.jstree", renameNode);
 	tree.bind("delete_node.jstree", deleteNode);
+	tree.bind("move_node.jstree", moveNode);
 	
 	tree.find("ul li").live("dblclick", function(e) {
 		e.reference = this;
