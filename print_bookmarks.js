@@ -1,7 +1,6 @@
 $(document).ready(initBookmarks);
 
 var refreshEnabled = true;
-
 var btOkCancel = { Ok: true, Cancel: false };
 
 function initBookmarks()
@@ -289,11 +288,6 @@ function refreshTree () {
 	}
 }
 
-
-function moveNode (e, data) {
-	alert("Moved `" + data.inst.get_text(data.rslt.obj) + "` inside `" + (data.rslt.parent === -1 ? 'the main container' : data.inst.get_text(data.rslt.parent)) + "` at index " + data.rslt.position);
-}
-
 function bindTreeEvents (tree) {
 	tree.bind("rename_node.jstree", renameNode);
 	tree.bind("delete_node.jstree", deleteNode);
@@ -400,6 +394,15 @@ function checkNode (checking, obj, parent, index) {
 			break;
 		}
 	return true;
+}
+
+function moveNode (e, data) {
+	var dest = {
+		parentId: data.rslt.parent.data().chromeNode.id,
+		index: data.rslt.position
+	};
+	refreshEnabled = false;
+	chrome.bookmarks.move(data.rslt.obj.data().chromeNode.id, dest, function(){ refreshEnabled = true; });
 }
 
 function renameNode (e, data) {
