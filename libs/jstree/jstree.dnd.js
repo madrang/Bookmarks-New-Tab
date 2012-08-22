@@ -10,6 +10,7 @@ Enables drag'n'drop.
 				.delegate('a', 'mousedown', $.proxy(function (e) { 
 					var obj = this.get_node(e.target);
 					if(obj && obj !== -1 && obj.length && e.which === 1) { // TODO: think about e.which
+						this.get_container().trigger('mousedown.jstree');
 						return $.vakata.dnd.start(e, { 'jstree' : true, 'origin' : this, 'obj' : obj }, '<div id="jstree-dnd" class="' + (this.data.themes ? 'jstree-' + this.get_theme() : '') + '"><ins class="jstree-icon jstree-er">&#160;</ins>' + this.get_text(e.currentTarget, true) + '<ins class="jstree-copy" style="display:none;">+</ins></div>');
 					}
 				}, this));
@@ -139,7 +140,7 @@ Enables drag'n'drop.
 						(data.data.obj, lastmv.par, lastmv.pos);
 				}
 			})
-			.bind('keyup keydown', function (e) {
+			.bind('keyup keydown', function (e, data) {
 				data = $.vakata.dnd._get();
 				if(data.data && data.data.jstree) {
 					data.helper.find('.jstree-copy:eq(0)')[ e[data.data.origin.get_settings().dnd.copy_modifier + "Key"] ? 'show' : 'hide' ]();

@@ -1,5 +1,5 @@
 /*
- * jsTree 1.0
+ * jsTree 1.0.0
  * http://jstree.com/
  *
  * Copyright (c) 2011 Ivan Bozhanov (vakata.com)
@@ -10,14 +10,13 @@
  *
  */
 
-/*jslint browser: true, onevar: true, undef: true, bitwise: true, strict: true */
-/*global window : false, clearInterval: false, clearTimeout: false, document: false, setInterval: false, setTimeout: false, jQuery: false, navigator: false, XSLTProcessor: false, DOMParser: false, XMLSerializer: false*/
+/*global jQuery, window, document, setTimeout, setInterval, clearTimeout, clearInterval, console */
 
-/* File: jstree.core.js
+/* File: jstree.js
 The only required part of jstree it consists of a few functions bound to the $.jstree object, the actual plugin function and a few core functions for manipulating a tree.
 */
-"use strict";
 (function () { 
+	"use strict";
 	if(!jQuery) { throw "jsTree: jQuery not included."; }
 	if(jQuery.jstree) { return; } // prevent another load? maybe there is a better way?
 
@@ -38,7 +37,7 @@ Some static functions and variables, unless you know exactly what you are doing 
 			Variable: $.jstree.VERSION
 				*string* the version of jstree
 		*/
-		VERSION : '1.0',
+		VERSION : '1.0.0',
 
 		/* 
 			Variable: $.jstree.IS_IE6
@@ -127,7 +126,7 @@ Some static functions and variables, unless you know exactly what you are doing 
 				i = 0;
 			if(focused_instance === n) {
 				for(i in instances) { 
-					if(instances.hasOwnProperty(i) && i != n) { 
+					if(instances.hasOwnProperty(i) && i !== n) { 
 						$.jstree._focus(i);
 						break; 
 					} 
@@ -328,7 +327,7 @@ Some static functions and variables, unless you know exactly what you are doing 
 			<$.jstree.__call>
 	*/
 	$.fn.jstree = function (settings) {
-		var _is_method	= (typeof settings == 'string'), 
+		var _is_method	= (typeof settings === 'string'), 
 			_arguments	= Array.prototype.slice.call(arguments, 1), 
 			_return		= this;
 		this.each(function () {
@@ -346,31 +345,17 @@ Some static functions and variables, unless you know exactly what you are doing 
 		return _return;
 	};
 	functions = $.jstree.__construct.prototype;
+	
+	$.expr[':'].jstree = function(a,i,m) {
+		return typeof ($(a).data("jstree_instance_id")) !== 'undefined';
+	};
 })(jQuery);
-//*/
 
 (function ($) {
-	$(function() {
-		var e1, e2;
-		if (/msie/.test(navigator.userAgent.toLowerCase())) {
-			e1 = $('<textarea cols="10" rows="2"></textarea>').css({ position: 'absolute', top: -1000, left: 0 }).appendTo('body');
-			e2 = $('<textarea cols="10" rows="2" style="overflow: hidden;"></textarea>').css({ position: 'absolute', top: -1000, left: 0 }).appendTo('body');
-				/* 
-					Group: $.jstree.
+	var ccp_node = false, 
+		ccp_mode = false;
 
-					Variable: $.jstree.SCROLLBAR_WIDTH
-						*integer* indicating the width of the client scrollbar
-				*/
-			$.jstree.SCROLLBAR_WIDTH = e1.width() - e2.width();
-			e1.add(e2).remove();
-		} 
-		else {
-			e1 = $('<div />').css({ width: 100, height: 100, overflow: 'auto', position: 'absolute', top: -1000, left: 0 })
-					.prependTo('body').append('<div />').find('div').css({ width: '100%', height: 200 });
-			$.jstree.SCROLLBAR_WIDTH = 100 - e1.width();
-			e1.parent().remove();
-		}
-	});
+	$(function() { $.jstree.SCROLLBAR_WIDTH = $.vakata.get_scrollbar_width(); });
 
 	$.jstree.plugin("core", {
 		__construct : function () {
@@ -490,7 +475,8 @@ Some static functions and variables, unless you know exactly what you are doing 
 			<_get_string>
 		*/
 		defaults : { 
-			strings : false
+			strings : false,
+			check_callback : true
 		},
 		_fn : { 
 			/* 
@@ -538,7 +524,7 @@ Some static functions and variables, unless you know exactly what you are doing 
 			*/
 			init : function () { 
 				this.data.core.original_container_html = this.get_container().find(" > ul > li").clone(true);
-				this.data.core.original_container_html.find("li").andSelf().contents().filter(function() { return this.nodeType == 3 && (!this.nodeValue || /^\s+$/.test(this.nodeValue)); }).remove();
+				this.data.core.original_container_html.find("li").andSelf().contents().filter(function() { return this.nodeType === 3 && (!this.nodeValue || /^\s+$/.test(this.nodeValue)); }).remove();
 				this.get_container().html("<ul><li class='jstree-loading'><a href='#'>" + this._get_string("Loading ...") + "</a></li></ul>");
 				this.clean_node(-1);
 				this.data.core.li_height = this.get_container_ul().children("li:eq(0)").height() || 18;
@@ -619,7 +605,7 @@ Some static functions and variables, unless you know exactly what you are doing 
 			*/
 			get_node : function (obj) { 
 				var $obj = $(obj, this.get_container()); 
-				if($obj.is(".jstree") || obj == -1) { return -1; } 
+				if($obj.is(".jstree") || obj === -1) { return -1; } 
 				$obj = $obj.closest("li", this.get_container()); 
 				return $obj.length ? $obj : false; 
 			},
@@ -1212,7 +1198,7 @@ Some static functions and variables, unless you know exactly what you are doing 
 					if($.isArray(state.open)) {
 						var res = true, 
 							t = this;
-						this.close_all();
+						//this.close_all();
 						$.each(state.open.concat([]), function (i, v) {
 							v = document.getElementById(v);
 							if(v) { 
@@ -1223,7 +1209,9 @@ Some static functions and variables, unless you know exactly what you are doing 
 									$.vakata.array_remove(state.open, i); 
 								}
 								else { 
-									t.open_node(v, $.proxy(function () { this.set_state(state); }, t), 0); 
+									if(!t.is_loading(v)) {
+										t.open_node(v, $.proxy(function () { this.set_state(state); }, t), 0); 
+									}
 									// there will be some async activity - so wait for it
 									res = false; 
 								}
@@ -1431,13 +1419,13 @@ Some static functions and variables, unless you know exactly what you are doing 
 				}
 				tmp = $.vakata.attributes(obj, true);
 				$.each(tmp, function (i, v) {
-					if(i == 'id') { li_attr[i] = v; return true; }
+					if(i === 'id') { li_attr[i] = v; return true; }
 					v = $.trim(v.replace(/\bjstree[^ ]*/ig,'').replace(/\s+$/ig," "));
 					if(v.length) { li_attr[i] = v; }
 				});
 				tmp = $.vakata.attributes(obj.children('a'), true);
 				$.each(tmp, function (i, v) {
-					if(i == 'id') { a_attr[i] = v; return true; }
+					if(i === 'id') { a_attr[i] = v; return true; }
 					v = $.trim(v.replace(/\bjstree[^ ]*/ig,'').replace(/\s+$/ig," "));
 					if(v.length) { a_attr[i] = v; }
 				});
@@ -1630,16 +1618,31 @@ Some static functions and variables, unless you know exactly what you are doing 
 					is_copy - *boolean* is this a copy or a move call
 
 				Returns:
-					boolean - _true_ if the move is valid, _false_ otherwise
+					boolean - _true_ if the modification is valid, _false_ otherwise
 			*/
 			check : function (chk, obj, par, pos) {
+				var tmp = chk.match(/^move_node|copy_node|create_node$/i) ? par : obj,
+					chc = this.get_settings().core.check_callback;
+				if(chc === false || ($.isFunction(chc) && chc.call(this, chk, obj, par, pos) === false)) { 
+					return false;
+				}
+				tmp = tmp === -1 ? this.get_container().data('jstree') : tmp.data('jstree');
+				if(tmp && tmp.functions && tmp.functions[chk]) {
+					tmp = tmp.functions[chk];
+					if($.isFunction(tmp)) { 
+						tmp = tmp.call(this, chk, obj, par, pos); 
+					}
+					if(tmp === false) {
+						return false;
+					}
+				}
 				switch(chk) {
 					case "create_node":
 						break;
 					case "rename_node":
 						break;
 					case "move_node":
-						var tmp = par === -1 ? this.get_container() : par;
+						tmp = par === -1 ? this.get_container() : par;
 						tmp = tmp.children('ul').children('li');
 						if(tmp.length && tmp.index(obj) !== -1 && (pos === obj.index() || pos === obj.index() + 1)) {
 							return false;
@@ -1743,7 +1746,7 @@ Some static functions and variables, unless you know exactly what you are doing 
 				old_ins.correct_node(old_par, true);
 				new_ins.correct_node(new_par, true);
 				if(callback) { callback.call(this, obj, new_par, obj.index()); }
-				this.__callback({ "obj" : obj, "parent" : new_par, "position" : obj.index(), "old_parent" : old_par, "is_multi" : is_multi });
+				this.__callback({ "obj" : obj, "parent" : new_par, "position" : obj.index(), "old_parent" : old_par, "is_multi" : is_multi, 'old_instance' : old_ins, 'new_instance' : new_ins });
 				return true;
 			},
 			/*
@@ -1771,7 +1774,7 @@ Some static functions and variables, unless you know exactly what you are doing 
 					data.inst - the instance
 					data.args - *array* the arguments passed to the function
 					data.plugin - *string* the function's plugin (here it will be _"core"_ but if the function is extended it may be something else)
-					data.rslt - *object* which contains a five keys: _obj_ (the node), _parent_ (the new parent) and _position_ which is the numerical index, _original_ (the original object) and is_multi (a boolean indicating if the node is coming from another tree instance)
+					data.rslt - *object* which contains a five keys: _obj_ (the node), _parent_ (the new parent) and _position_ which is the numerical index, _original_ (the original object), is_multi (a boolean indicating if the node is coming from another tree instance, _old_instance_ (the source instance) and _new_instance_ (the receiving instance))
 				
 				Example:
 				> $("div").bind("copy_node.jstree", function (e, data) { 
@@ -1822,6 +1825,7 @@ Some static functions and variables, unless you know exactly what you are doing 
 						if(!pos) { pos = 0; }
 						break;
 				}
+
 				if(!this.check("copy_node", org_obj, new_par, pos)) { return false; }
 
 				if(!par.children("ul").length) { par.append("<ul />"); }
@@ -1837,8 +1841,101 @@ Some static functions and variables, unless you know exactly what you are doing 
 				new_ins.clean_node(obj); // always clean so that selected states, etc. are removed
 				new_ins.correct_node(new_par, true); // no need to correct the old parent, as nothing has changed there
 				if(callback) { callback.call(this, obj, new_par, obj.index(), org_obj); }
-				this.__callback({ "obj" : obj, "parent" : new_par, "position" : obj.index(), "original" : org_obj, "is_multi" : is_multi });
+				this.__callback({ "obj" : obj, "parent" : new_par, "old_parent" : old_par, "position" : obj.index(), "original" : org_obj, "is_multi" : is_multi, 'old_instance' : old_ins, 'new_instance' : new_ins });
 				return true;
+			},
+
+			cut : function (obj) {
+				obj = this.get_node(obj);
+				if(!obj || obj === -1 || !obj.length) { return false; }
+				ccp_node = obj;
+				ccp_mode = 'move_node';
+				this.__callback({ "obj" : obj });
+			},
+			copy : function (obj) {
+				obj = this.get_node(obj);
+				if(!obj || obj === -1 || !obj.length) { return false; }
+				ccp_node = obj;
+				ccp_mode = 'copy_node';
+				this.__callback({ "obj" : obj });
+			},
+			can_paste : function () {
+				return ccp_mode !== false && ccp_node !== false;
+			},
+			paste : function (obj) { 
+				obj = this.get_node(obj);
+				if(!obj || !ccp_mode || !ccp_mode.match(/^(copy_node|move_node)$/) || !ccp_node) { return false; }
+				this[ccp_mode](ccp_node, obj);
+				this.__callback({ "obj" : obj, "nodes" : ccp_node, "mode" : ccp_mode });
+				ccp_node = false;
+				ccp_mode = false;
+			},
+
+			edit : function (obj, default_text) {
+				obj = this.get_node(obj);
+				if(!obj || obj === -1 || !obj.length) { return false; }
+				obj.parentsUntil(".jstree",".jstree-closed").each($.proxy(function (i, v) { 
+					this.open_node(v, false, 0);
+				}, this));
+				var rtl = this.data.core.rtl,
+					w  = this.get_container().width(),
+					a  = obj.children('a:eq(0)'),
+					oi = obj.children("ins"),
+					ai = a.children("ins"),
+					w1 = oi.width() * oi.length,
+					w2 = ai.width() * ai.length,
+					t  = typeof default_text === 'string' ? default_text : this.get_text(obj),
+					h1 = $("<div />", { css : { "position" : "absolute", "top" : "-200px", "left" : (rtl ? "0px" : "-1000px"), "visibility" : "hidden" } }).appendTo("body"),
+					h2 = obj.css("position","relative").append(
+						$("<input />", { 
+							"value" : t,
+							"class" : "jstree-rename-input",
+							// "size" : t.length,
+							"css" : {
+								"padding" : "0",
+								"border" : "1px solid silver",
+								"position" : "absolute",
+								"left"  : (rtl ? "auto" : (w1 + w2 + 4) + "px"),
+								"right" : (rtl ? (w1 + w2 + 4) + "px" : "auto"),
+								"top" : "0px",
+								"height" : (this.data.core.li_height - 2) + "px",
+								"lineHeight" : (this.data.core.li_height - 2) + "px",
+								"width" : "150px" // will be set a bit further down
+							},
+							"blur" : $.proxy(function () {
+								var i = obj.children(".jstree-rename-input"),
+									v = i.val();
+								if(v === "") { v = t; }
+								h1.remove();
+								i.remove();
+								this.rename_node(obj, v);
+								obj.css("position", "");
+							}, this),
+							"keyup" : function (event) {
+								var key = event.keyCode || event.which;
+								if(key === 27) { this.value = t; this.blur(); return; }
+								else if(key === 13) { this.blur(); return; }
+								else { h2.width(Math.min(h1.text("pW" + this.value).width(),w)); }
+							},
+							"keypress" : function(event) {
+								var key = event.keyCode || event.which;
+								if(key === 13) { return false; }
+							}
+						})
+					).children(".jstree-rename-input"),
+					fn = {
+							fontFamily		: a.css('fontFamily')		|| '',
+							fontSize		: a.css('fontSize')			|| '',
+							fontWeight		: a.css('fontWeight')		|| '',
+							fontStyle		: a.css('fontStyle')		|| '',
+							fontStretch		: a.css('fontStretch')		|| '',
+							fontVariant		: a.css('fontVariant')		|| '',
+							letterSpacing	: a.css('letterSpacing')	|| '',
+							wordSpacing		: a.css('wordSpacing')		|| ''
+					};
+				this.set_text(obj, "");
+				h1.css(fn);
+				h2.css(fn).width(Math.min(h1.text("pW" + h2[0].value).width(),w))[0].select();
 			}
 		}
 	});
@@ -1851,8 +1948,8 @@ Some static functions and variables, unless you know exactly what you are doing 
 				'.jstree-rtl li { margin-left:0; margin-right:18px; } ' + 
 				'.jstree > ul > li { margin-left:0px; } ' + 
 				'.jstree-rtl > ul > li { margin-right:0px; } ' + 
-				'.jstree .jstree-icon { display:inline-block; text-decoration:none; margin:0; padding:0; } ' + 
-				'.jstree .jstree-ocl { width:18px; height:18px; text-align:center; line-height:18px; cursor:default; } ' + 
+				'.jstree .jstree-icon { display:inline-block; text-decoration:none; margin:0; padding:0; vertical-align:top; } ' + 
+				'.jstree .jstree-ocl { width:18px; height:18px; text-align:center; line-height:18px; cursor:default; vertical-align:top; } ' + 
 				'.jstree a { display:inline-block; line-height:16px; height:16px; color:black; white-space:nowrap; padding:1px 2px; margin:0; } ' + 
 				'.jstree a:focus { outline: none; } ' + 
 				'li.jstree-open > ul { display:block; } ' + 
@@ -1886,6 +1983,5 @@ Some static functions and variables, unless you know exactly what you are doing 
 		$.vakata.css.add_sheet({ str : css_string, title : "jstree" });
 	});
 })(jQuery);
-//*/
 
 })();

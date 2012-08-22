@@ -15,7 +15,7 @@ Sorts items alphabetically (or using any other function)
 						this._sort(data.rslt.obj.parent(), false);
 					}, this))
 				.bind("move_node.jstree copy_node.jstree", $.proxy(function (e, data) {
-						var m = data.rslt.parent == -1 ? this.get_container_ul() : data.rslt.parent.children('ul');
+						var m = data.rslt.parent === -1 ? this.get_container_ul() : data.rslt.parent.children('ul');
 						this._sort(m, false);
 					}, this));
 		},

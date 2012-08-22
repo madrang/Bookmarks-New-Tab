@@ -1,9 +1,9 @@
 /* File: jstree.hotkeys.js 
-Enables keyboard shortcuts. Depends on jQuery.hotkeys (included).
+Enables keyboard shortcuts. Depends on jQuery.hotkeys (included in vakata.js).
 */
 /* Group: jstree hotkeys plugin */
 (function ($) {
-	if(typeof $.hotkeys === "undefined") { throw "jsTree hotkeys: jQuery hotkeys plugin not included."; }
+	if(typeof $.hotkeys === "undefined" && typeof $.vakata_hotkeys === "undefined") { throw "jsTree hotkeys: jQuery hotkeys plugin not included."; }
 
 	var bound = [];
 	function exec(i, event) {
@@ -12,12 +12,13 @@ Enables keyboard shortcuts. Depends on jQuery.hotkeys (included).
 			tmp = f.get_settings(true).hotkeys[i];
 			if(tmp) { return tmp.call(f, event); }
 		}
+		return true;
 	}
 	$.jstree.plugin("hotkeys", {
 		__construct : function () {
 			if(!this.data.ui) { throw "jsTree hotkeys: jsTree UI plugin not included."; }
 			$.each(this.get_settings(true).hotkeys, function (i, v) {
-				if(v !== false && $.inArray(i, bound) == -1) {
+				if(v !== false && $.inArray(i, bound) === -1) {
 					$(document).bind("keydown", i, function (event) { return exec(i, event); });
 					bound.push(i);
 				}
@@ -112,7 +113,7 @@ Enables keyboard shortcuts. Depends on jQuery.hotkeys (included).
 			},
 			"space" : function () { 
 				if(this.data.ui.hovered) { this.data.ui.hovered.children("a:eq(0)").click(); } 
-				return false; 
+				return true; 
 			},
 			"ctrl+space" : function (event) { 
 				event.type = "click";

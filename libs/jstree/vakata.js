@@ -1,3 +1,5 @@
+/*global XSLTProcessor: false, ActiveXObject: false, console : false */
+
 /*
 File: Helper functions
 This file includes some functions that enable CSS manipulations, contextmenus, XSLT transformations and drag'n'drop.
@@ -30,6 +32,12 @@ Output:
 */
 (function ($) {
 	$.fn.vakata_reverse = [].reverse;
+})(jQuery);
+
+(function ($) {
+	jQuery.expr[':'].vakata_icontains = function(a,i,m){
+		return (a.textContent || a.innerText || "").toLowerCase().indexOf(m[3].toLowerCase())>=0;
+	};
 })(jQuery);
 
 /*
@@ -96,6 +104,32 @@ Collects all attributes from a DOM node.
 	};
 })(jQuery);
 
+/*
+Function: $.vakata.get_scrollbar_width
+Gets the width of the scrollbar
+*/
+(function ($) {
+	var sb;
+	$.vakata.get_scrollbar_width = function () {
+		var e1, e2;
+		if(!sb) { 
+			if(/msie/.test(navigator.userAgent.toLowerCase())) {
+				e1 = $('<textarea cols="10" rows="2"></textarea>').css({ position: 'absolute', top: -1000, left: 0 }).appendTo('body');
+				e2 = $('<textarea cols="10" rows="2" style="overflow: hidden;"></textarea>').css({ position: 'absolute', top: -1000, left: 0 }).appendTo('body');
+				sb = e1.width() - e2.width();
+				e1.add(e2).remove();
+			} 
+			else {
+				e1 = $('<div />').css({ width: 100, height: 100, overflow: 'auto', position: 'absolute', top: -1000, left: 0 })
+						.prependTo('body').append('<div />').find('div').css({ width: '100%', height: 200 });
+				sb = 100 - e1.width();
+				e1.parent().remove();
+			}
+		}
+		return sb;
+	};
+})(jQuery);
+
 /* 
 Group: CSS
 Functions needed to manipulate stylesheets (add, remove, change)
@@ -129,7 +163,7 @@ Functions needed to manipulate stylesheets (add, remove, change)
 				j = 0;
 			do {
 				if(css_rules.length && j > css_rules.length + 5) { return false; }
-				if(css_rules[j].selectorText && css_rules[j].selectorText.toLowerCase() == rule_name) {
+				if(css_rules[j].selectorText && css_rules[j].selectorText.toLowerCase() === rule_name) {
 					if(delete_flag === true) {
 						if(sheet.removeRule) { sheet.removeRule(j); }
 						if(sheet.deleteRule) { sheet.deleteRule(j); }
@@ -478,12 +512,12 @@ Functions needed to drag'n'drop elements
 				.each(function () {
 					var t = $(this), o = t.offset();
 					if(this.scrollHeight > this.offsetHeight) {
-						if(o.top + t.height() - e.pageY < $.vakata.dnd.settings.scroll_proximity)	{ vakata_dnd.scroll_t = 1; scr = true; }
-						if(e.pageY - o.top < $.vakata.dnd.settings.scroll_proximity)				{ vakata_dnd.scroll_t = -1; scr = true; }
+						if(o.top + t.height() - e.pageY < $.vakata.dnd.settings.scroll_proximity)	{ vakata_dnd.scroll_t = 1; }
+						if(e.pageY - o.top < $.vakata.dnd.settings.scroll_proximity)				{ vakata_dnd.scroll_t = -1; }
 					}
 					if(this.scrollWidth > this.offsetWidth) {
-						if(o.left + t.width() - e.pageX < $.vakata.dnd.settings.scroll_proximity)	{ vakata_dnd.scroll_l = 1; scr = true; }
-						if(e.pageX - o.left < $.vakata.dnd.settings.scroll_proximity)				{ vakata_dnd.scroll_l = -1; scr = true; }
+						if(o.left + t.width() - e.pageX < $.vakata.dnd.settings.scroll_proximity)	{ vakata_dnd.scroll_l = 1; }
+						if(e.pageX - o.left < $.vakata.dnd.settings.scroll_proximity)				{ vakata_dnd.scroll_l = -1; }
 					}
 					if(vakata_dnd.scroll_t || vakata_dnd.scroll_l) { 
 						vakata_dnd.scroll_e = $(this);
@@ -612,19 +646,111 @@ A function used to do XSLT transformations.
 		xml = $.parseXML(xml);
 		xsl = $.parseXML(xsl);
 		// FF, Chrome
-		if(r === false && typeof (XSLTProcessor) != "undefined") {
+		if(r === false && typeof (XSLTProcessor) !== "undefined") {
 			p = new XSLTProcessor();
 			p.importStylesheet(xsl);
 			r = p.transformToFragment(xml, document);
 			r = $('<div />').append(r).html();
 		}
 		// OLD IE
-		if(r === false && typeof (xml.transformNode) != "undefined") {
+		if(r === false && typeof (xml.transformNode) !== "undefined") {
 			r = xml.transformNode(xsl);
 		}
 		return r;
 	};
 })(jQuery);
+
+/* 
+Group: Hotkeys
+Copy of the John Resig's fork of http://github.com/tzuryby/hotkeys for consistency
+*/
+if(typeof jQuery.hotkeys === "undefined") { 
+	(function ($) {
+			$.vakata_hotkeys = {
+				version: "0.8",
+
+				specialKeys: {
+					8: "backspace", 9: "tab", 13: "return", 16: "shift", 17: "ctrl", 18: "alt", 19: "pause",
+					20: "capslock", 27: "esc", 32: "space", 33: "pageup", 34: "pagedown", 35: "end", 36: "home",
+					37: "left", 38: "up", 39: "right", 40: "down", 45: "insert", 46: "del", 
+					96: "0", 97: "1", 98: "2", 99: "3", 100: "4", 101: "5", 102: "6", 103: "7",
+					104: "8", 105: "9", 106: "*", 107: "+", 109: "-", 110: ".", 111 : "/", 
+					112: "f1", 113: "f2", 114: "f3", 115: "f4", 116: "f5", 117: "f6", 118: "f7", 119: "f8", 
+					120: "f9", 121: "f10", 122: "f11", 123: "f12", 144: "numlock", 145: "scroll", 191: "/", 224: "meta"
+				},
+			
+				shiftNums: {
+					"`": "~", "1": "!", "2": "@", "3": "#", "4": "$", "5": "%", "6": "^", "7": "&", 
+					"8": "*", "9": "(", "0": ")", "-": "_", "=": "+", ";": ": ", "'": "\"", ",": "<", 
+					".": ">",  "/": "?",  "\\": "|"
+				}
+			};
+
+			function keyHandler( handleObj ) {
+				// Only care when a possible input has been specified
+				if ( typeof handleObj.data !== "string" ) {
+					return;
+				}
+				
+				var origHandler = handleObj.handler,
+					keys = handleObj.data.toLowerCase().split(" ");
+			
+				handleObj.handler = function( event ) {
+					// Don't fire in text-accepting inputs that we didn't directly bind to
+					if ( this !== event.target && (/textarea|select/i.test( event.target.nodeName ) ||
+						event.target.type === "text") ) {
+						return;
+					}
+					
+					// Keypress represents characters, not special keys
+					var special = event.type !== "keypress" && jQuery.vakata_hotkeys.specialKeys[ event.which ],
+						character = String.fromCharCode( event.which ).toLowerCase(),
+						key, modif = "", possible = {};
+
+					// check combinations (alt|ctrl|shift+anything)
+					if ( event.altKey && special !== "alt" ) {
+						modif += "alt+";
+					}
+
+					if ( event.ctrlKey && special !== "ctrl" ) {
+						modif += "ctrl+";
+					}
+					
+					// TODO: Need to make sure this works consistently across platforms
+					if ( event.metaKey && !event.ctrlKey && special !== "meta" ) {
+						modif += "meta+";
+					}
+
+					if ( event.shiftKey && special !== "shift" ) {
+						modif += "shift+";
+					}
+
+					if ( special ) {
+						possible[ modif + special ] = true;
+
+					} else {
+						possible[ modif + character ] = true;
+						possible[ modif + jQuery.vakata_hotkeys.shiftNums[ character ] ] = true;
+
+						// "$" can be triggered as "Shift+4" or "Shift+$" or just "$"
+						if ( modif === "shift+" ) {
+							possible[ jQuery.vakata_hotkeys.shiftNums[ character ] ] = true;
+						}
+					}
+
+					for ( var i = 0, l = keys.length; i < l; i++ ) {
+						if ( possible[ keys[i] ] ) {
+							return origHandler.apply( this, arguments );
+						}
+					}
+				};
+			}
+
+			jQuery.each([ "keydown", "keyup", "keypress" ], function() {
+				jQuery.event.special[ this ] = { add: keyHandler };
+			});
+	})(jQuery);
+}
 
 /* 
 Group: Context menu
@@ -687,7 +813,7 @@ Functions needed to show a custom context menu.
 		*/
 		_execute : function (i) {
 			i = vakata_context.items[i];
-			return i && i.action ? i.action.call(null, {
+			return i && !i._disabled && i.action ? i.action.call(null, {
 						"item"		: i,
 						"reference"	: vakata_context.reference,
 						"element"	: vakata_context.element,
@@ -715,7 +841,8 @@ Functions needed to show a custom context menu.
 				vakata_context.items	= [];
 			}
 			var str = "",
-				sep = false;
+				sep = false,
+				tmp;
 
 			if(is_callback) { str += "<ul>"; }
 			$.each(o, function (i, val) {
@@ -777,8 +904,8 @@ Functions needed to show a custom context menu.
 				y = o.offset().top,
 				w = e.width(),
 				h = e.height(),
-				dw = $(document).width(),
-				dh = $(document).height();
+				dw = $(window).width() + $(window).scrollLeft(),
+				dh = $(window).height() + $(window).scrollTop();
 			// може да се спести е една проверка - дали няма някой от класовете вече нагоре
 			if(right_to_left) {
 				o[x - (w + 10 + o.outerWidth()) < 0 ? "addClass" : "removeClass"]("vakata-context-left");
@@ -858,6 +985,9 @@ Functions needed to show a custom context menu.
 				<$.vakata.context.show>
 		*/
 		show : function (reference, position, data) { 
+			if(vakata_context.element && vakata_context.element.length) {
+				vakata_context.element.width('');
+			}
 			switch(!0) {
 				case (!position && !reference):
 					return false;
@@ -888,26 +1018,20 @@ Functions needed to show a custom context menu.
 					x = vakata_context.position_x,
 					y = vakata_context.position_y,
 					w = e.width(),
-					h = e.height();
-					
-				if(window.innerWidth) {
-					if((x + w + 20) - window.scrollX > window.innerWidth) {
-						x = (window.innerWidth + window.scrollX) - (w + 20);
+					h = e.height(),
+					dw = $(window).width() + $(window).scrollLeft(),
+					dh = $(window).height() + $(window).scrollTop();
+				if(right_to_left) {
+					x -= e.outerWidth();
+					if(x < $(window).scrollLeft() + 20) {
+						x = $(window).scrollLeft() + 20;
 					}
-					
-					if((y + h + 20) - window.scrollY > window.innerHeight) {
-						y = (window.innerHeight + window.scrollY) - (h + 20);
-					}
-				} else {
-					var dw = $(document).width(),
-						dh = $(document).height();
-					
-					if(x + w + 20 > dw) {
-						x = dw - (w + 20);
-					}
-					if(y + h + 20 > dh) {
-						y = dh - (h + 20);
-					}
+				}
+				if(x + w + 20 > dw) {
+					x = dw - (w + 20);
+				}
+				if(y + h + 20 > dh) {
+					y = dh - (h + 20);
 				}
 
 				vakata_context.element
@@ -985,6 +1109,7 @@ Functions needed to show a custom context menu.
 			'	-moz-text-shadow:0 0 0 transparent; -webkit-text-shadow:0 0 0 transparent; text-shadow:0 0 0 transparent; ' + 
 			'	-moz-box-shadow:0 0 0 transparent; -webkit-box-shadow:0 0 0 transparent; box-shadow:0 0 0 transparent; ' + 
 			'	-moz-border-radius:0; -webkit-border-radius:0; border-radius:0; }' + 
+			'.vakata-context li.vakata-contextmenu-disabled a, .vakata-context li.vakata-contextmenu-disabled a:hover { color:silver; background-color:transparent; border:0; box-shadow:0 0 0; }' +
 			'' + 
 			'.vakata-context li a ins { text-decoration:none; display:inline-block; width:2.4em; height:2.4em; background:transparent; margin:0 0 0 -2em; } ' + 
 			'.vakata-context li a span { display:inline-block; width:1px; height:2.4em; background:white; margin:0 0.5em 0 0; border-left:1px solid #e2e3e3; _overflow:hidden; } ' + 
@@ -1054,7 +1179,7 @@ Functions needed to show a custom context menu.
 				vakata_context.element.find("ul").hide().end();
 			});
 
-		if(typeof $.hotkeys !== "undefined") {
+		if(typeof $.hotkeys !== "undefined" || typeof $.vakata_hotkeys !== "undefined") {
 			$(document)
 				.bind("keydown", "up", function (e) { 
 					if(vakata_context.is_visible) { 
@@ -1111,7 +1236,7 @@ Functions needed to encode/decode JSON. Based on the jQuery JSON Plugin.
 			meta		= { '\b':'\\b','\t':'\\t','\n':'\\n','\f':'\\f','\r':'\\r','"' :'\\"','\\':'\\\\' };
 		if(str.match(escapeable)) {
 			return '"' + str.replace(escapeable, function (a) {
-					var c = _meta[a];
+					var c = meta[a];
 					if(typeof c === 'string') { return c; }
 					c = a.charCodeAt();
 					return '\\u00' + Math.floor(c / 16).toString(16) + (c % 16).toString(16);
@@ -1233,6 +1358,7 @@ A copy of the jQuery cookie plugin.
 Group: LocalStorage
 Functions for dealing with localStorage with fallback to userData or cookies. A slight modification of jstorage.
 */
+
 (function ($) {
 	var _storage = {},
 		_storage_service = {jStorage:"{}"},
@@ -1240,10 +1366,23 @@ Functions for dealing with localStorage with fallback to userData or cookies. A 
 		_storage_size = 0,
 		json_encode = $.vakata.json.encode,
 		json_decode = $.vakata.json.decode,
-		_backend = false;
+		_backend = false,
+		_ttl_timeout = false;
 
 	function _init() {
-		if("localStorage" in window) {
+		var localStorageReallyWorks = false;
+		if("localStorage" in window){
+			try {
+				window.localStorage.setItem('_tmptest', 'tmpval');
+				localStorageReallyWorks = true;
+				window.localStorage.removeItem('_tmptest');
+			} catch(BogusQuotaExceededErrorOnIos5) {
+				// Thanks be to iOS5 Private Browsing mode which throws
+				// QUOTA_EXCEEDED_ERRROR DOM Exception 22.
+			}
+		}
+
+		if(localStorageReallyWorks){
 			try {
 				if(window.localStorage) {
 					_storage_service = window.localStorage;
@@ -1264,29 +1403,32 @@ Functions for dealing with localStorage with fallback to userData or cookies. A 
 			if(_storage_elm.addBehavior) {
 				_storage_elm.style.behavior = 'url(#default#userData)';
 				document.getElementsByTagName('head')[0].appendChild(_storage_elm);
-				alert(_storage_elm.load);
-				_storage_elm.load("jStorage");
-				var data = "{}";
 				try {
+					_storage_elm.load("jStorage");
+					var data = "{}";
 					data = _storage_elm.getAttribute("jStorage");
+					_storage_service.jStorage = data;
+					_backend = "userDataBehavior";
 				} catch(E5) {}
-				_storage_service.jStorage = data;
-				_backend = "userDataBehavior";
 			}
-			else if(
-				!!$.vakata.cookie('vjstorage') || 
-				($.vakata.cookie('vjstorage', '{}', { 'expires' : 365 }) && $.vakata.cookie('vjstorage') === '{}')
+			if(
+				!_backend && (
+					!!$.vakata.cookie('__vjstorage') || 
+					($.vakata.cookie('__vjstorage', '{}', { 'expires' : 365 }) && $.vakata.cookie('__vjstorage') === '{}')
+				)
 			) { 
 				_storage_elm = null;
-				_storage_service.jStorage = $.vakata.cookie('vjstorage');
+				_storage_service.jStorage = $.vakata.cookie('__vjstorage');
 				_backend = "cookie";
 			}
-			else {
+
+			if(!_backend) {
 				_storage_elm = null;
 				return;
 			}
 		}
 		_load_storage();
+		_handleTTL();
 	}
 
 	function _load_storage() {
@@ -1308,18 +1450,59 @@ Functions for dealing with localStorage with fallback to userData or cookies. A 
 				_storage_elm.save("jStorage");
 			}
 			if(_backend === 'cookie') {
-				$.vakata.cookie('vjstorage', _storage_service.jStorage, { 'expires' : 365 });
+				$.vakata.cookie('__vjstorage', _storage_service.jStorage, { 'expires' : 365 });
 			}
 			_storage_size = _storage_service.jStorage?String(_storage_service.jStorage).length:0;
 		} catch(E7) { /* probably cache is full, nothing is saved this way*/ }
 	}
 
 	function _checkKey(key) {
-		if(!key || (typeof key != "string" && typeof key != "number")){
+		if(!key || (typeof key !== "string" && typeof key !== "number")){
 			throw new TypeError('Key name must be string or numeric');
+		}
+		if(key === "__jstorage_meta") {
+			throw new TypeError('Reserved key name');
 		}
 		return true;
 	}
+
+	function _handleTTL() {
+		var curtime = +new Date(), 
+			i, 
+			TTL, 
+			nextExpire = Infinity, 
+			changed = false;
+
+		if(_ttl_timeout !== false) {
+			clearTimeout(_ttl_timeout);
+		}
+		if(!_storage.__jstorage_meta || typeof _storage.__jstorage_meta.TTL !== "object"){
+			return;
+		}
+		TTL = _storage.__jstorage_meta.TTL;
+		for(i in TTL) {
+			if(TTL.hasOwnProperty(i)) {
+				if(TTL[i] <= curtime) {
+					delete TTL[i];
+					delete _storage[i];
+					changed = true;
+				}
+				else if(TTL[i] < nextExpire) {
+					nextExpire = TTL[i];
+				}
+			}
+		}
+
+		// set next check
+		if(nextExpire !== Infinity) {
+			_ttl_timeout = setTimeout(_handleTTL, nextExpire - curtime);
+		}
+		// save changes
+		if(changed) {
+			_save();
+		}
+	}
+
 	/* 
 		Variable: $.vakata.storage
 		*object* holds all storage related functions and properties.
@@ -1329,7 +1512,7 @@ Functions for dealing with localStorage with fallback to userData or cookies. A 
 			Variable: $.vakata.storage.version
 			*string* the version of jstorage used
 		*/
-		version: "0.1.5.2",
+		version: "0.1.6.1",
 		/* 
 			Function: $.vakata.storage.set
 			Set a key to a value
@@ -1363,7 +1546,7 @@ Functions for dealing with localStorage with fallback to userData or cookies. A 
 			if(key in _storage){
 				return _storage[key];
 			}
-			return typeof(def) == 'undefined' ? null : def;
+			return typeof(def) === 'undefined' ? null : def;
 		},
 		/* 
 			Function: $.vakata.storage.del
@@ -1379,11 +1562,41 @@ Functions for dealing with localStorage with fallback to userData or cookies. A 
 			_checkKey(key);
 			if(key in _storage) {
 				delete _storage[key];
+
+				if(_storage.__jstorage_meta && typeof _storage.__jstorage_meta.TTL === "object" && key in _storage.__jstorage_meta.TTL) {
+					delete _storage.__jstorage_meta.TTL[key];
+				}
 				_save();
 				return true;
 			}
 			return false;
 		},
+
+		setTTL: function(key, ttl){
+			var curtime = +new Date();
+
+			_checkKey(key);
+			ttl = Number(ttl) || 0;
+			if(key in _storage){
+				if(!_storage.__jstorage_meta){
+					_storage.__jstorage_meta = {};
+				}
+				if(!_storage.__jstorage_meta.TTL) {
+					_storage.__jstorage_meta.TTL = {};
+				}
+				if(ttl > 0) {
+					_storage.__jstorage_meta.TTL[key] = curtime + ttl;
+				}
+				else {
+					delete _storage.__jstorage_meta.TTL[key];
+				}
+				_save();
+				_handleTTL();
+				return true;
+			}
+			return false;
+		},
+
 		/* 
 			Function: $.vakata.storage.flush
 			Empty the storage.
@@ -1418,7 +1631,7 @@ Functions for dealing with localStorage with fallback to userData or cookies. A 
 		*/
 		index : function(){
 			var index = [], i;
-			$.each(_storage, function (i, v) { index.push(i); });
+			$.each(_storage, function (i, v) { if(i !== "__jstorage_meta") { index.push(i); } });
 			return index;
 		},
 		/* 
@@ -1442,7 +1655,7 @@ Functions for dealing with localStorage with fallback to userData or cookies. A 
 			return _backend;
 		},
 		/* 
-			Function: $.vakata.storage.currentBackend
+			Function: $.vakata.storage.storageAvailable
 			See if storage functionality is available.
 
 			Returns:
@@ -1537,7 +1750,7 @@ Modifies time elements to a more human readable value. Taken from: https://githu
 					var val = Math.ceil(normalize(seconds, format[3]) / (format[3]));
 					return val +
 							' ' +
-							(val != 1 ? format[2] : format[1]) +
+							(val !== 1 ? format[2] : format[1]) +
 							(i > 0 ? token : '');
 				}
 			}
@@ -1547,12 +1760,12 @@ Modifies time elements to a more human readable value. Taken from: https://githu
 			Parses all time elements in the document and keeps reparsing them every few seconds.
 
 			Parameters:
-				i - the interval for reparsing (in seconds)
+				i - the interval for reparsing (in milliseconds). Default is 60000.
 				format - the format to use, example: _Published %{s}._. Default is _%{s}_.
 		*/
 		init : function (i, format) {
-			$("time").vakata_pretty_date(format);
-			setInterval(function(){ $("time").vakata_pretty_date(format); }, i || 5000);
+			$("time, [datetime]").vakata_pretty_date(format);
+			setInterval(function(){ $("time, [datetime]").vakata_pretty_date(format); }, i || 60000);
 		}
 	};
 	/*
@@ -1570,10 +1783,302 @@ Modifies time elements to a more human readable value. Taken from: https://githu
 				date = $.vakata.pretty_date.parse($t.attr('datetime'), compare);
 			if(date) {
 				date = format.replace('%{s}', date);
-				if($t.html() != date) {
+				if($t.html() !== date) {
 					$t.html(date);
 				}
 			}
 		});
+	};
+})(jQuery);
+
+/* 
+Group: Selection
+Selection related functions
+*/
+(function ($) {
+	/* 
+		Variable: $.vakata.selection
+		*object* holds all selection related functions and properties.
+	*/
+	$.vakata.selection = {
+		/* 
+			Function: $.vakata.selection.get
+			Gets the current selection.
+
+			Parameters:
+				as_text - a boolean - if set to _true_ selection is returned as text, otherwise as HTML
+
+			Returns:
+				*string* - the current selection
+		*/
+		get : function (as_text) {
+			if(window.getSelection) {
+				if(as_text) {
+					return window.getSelection().toString();
+				}
+				var userSelection	= window.getSelection(),
+					range			= userSelection.getRangeAt && userSelection.rangeCount ? userSelection.getRangeAt(0) : document.createRange(),
+					div				= document.createElement('div');
+				if(!userSelection.getRangeAt) {
+					range.setStart(userSelection.anchorNode, userSelection.anchorOffset);
+					range.setEnd(userSelection.focusNode, userSelection.focusOffset);
+				}
+				div.appendChild(range.cloneContents());
+				return div.innerHTML;
+			}
+			if(document.selection) {
+				return document.selection.createRange()[ as_text ? 'text' : 'htmlText' ];
+			}
+			return '';
+		},
+		/* 
+			Function: $.vakata.selection.elm_get
+			Gets the selection inside an input element or textarea.
+
+			Parameters:
+				e - the actual DOM element or the ID of the element
+
+			Returns:
+				*object* - the current selection (start, end, length, text)
+		*/
+		elm_get : function (e) {
+			e = typeof e === 'string' ? document.getElementById(e) : e;
+			if(e.jquery) { e = e.get(0); }
+			if('selectionStart' in e) { // Mozilla and DOM 3.0
+				return { 
+					'start'		: e.selectionStart, 
+					'end'		: e.selectionEnd, 
+					'length'	: (e.selectionEnd - e.selectionStart), 
+					'text'		: e.value.substr(e.selectionStart, (e.selectionEnd - e.selectionStart)) 
+				};
+			}
+			else if(document.selection) { // IE
+				e.focus();
+				var tr0 = document.selection.createRange(),
+					tr1 = false,
+					tr2 = false,
+					len, text_whole, the_start, the_end;
+				if(tr0 && tr0.parentElement() === e) {
+					len = e.value.length;
+					text_whole = e.value.replace(/\r\n/g, "\n");
+
+					tr1 = e.createTextRange();
+					tr1.moveToBookmark(tr0.getBookmark());
+					tr2 = e.createTextRange();
+					tr2.collapse(false);
+
+					if(tr1.compareEndPoints("StartToEnd", tr2) > -1) {
+						the_start = the_end = len;
+					} 
+					else {
+						the_start  = -tr1.moveStart("character", -len);
+						the_start += text_whole.slice(0, the_start).split("\n").length - 1;
+						if (tr1.compareEndPoints("EndToEnd", tr2) > -1) {
+							the_end = len;
+						} else {
+							the_end  = -tr1.moveEnd("character", -len);
+							the_end += text_whole.slice(0, the_end).split("\n").length - 1;
+						}
+					}
+					text_whole = e.value.slice(the_start, the_end);
+					return { 
+						'start'		: the_start, 
+						'end'		: the_end, 
+						'length'	: text_whole.length, 
+						'text'		: text_whole
+					};
+				}
+			}
+			else { // not supported
+				return { 
+					'start'		: e.value.length, 
+					'end'		: e.value.length, 
+					'length'	: 0, 
+					'text'		: '' 
+				};
+			}
+		},
+		/* 
+			Function: $.vakata.selection.elm_set
+			Sets the selection inside an input element or textarea.
+
+			Parameters:
+				e - the actual DOM element or the ID of the element
+				beg - the char to start the selection
+				end - the char to end the selection
+
+			Returns:
+				*object* - the current selection (start, end, length, text)
+		*/
+		elm_set : function (e, beg, end) {
+			e = typeof e === 'string' ? document.getElementById(e) : e;
+			if(e.jquery) { e = e.get(0); }
+			if('selectionStart' in e) { // Mozilla and DOM 3.0
+				e.focus();
+				e.selectionStart	= beg;
+				e.selectionEnd		= end;
+			}
+			else if(document.selection) { // IE
+				e.focus();
+				var tr	= e.createTextRange(), 
+					tx	= e.value.replace(/\r\n/g, "\n");
+
+				beg -= tx.slice(0, beg).split("\n").length - 1;
+				end -= tx.slice(0, end).split("\n").length - 1;
+
+				tr.collapse(true);
+				tr.moveEnd('character', end);
+				tr.moveStart('character', beg); 
+				tr.select();
+			}
+			return $.vakata.selection.elm_get(e);
+		},
+		/* 
+			Function: $.vakata.selection.elm_replace
+			Replace the selection inside an input element or textarea.
+
+			Parameters:
+				e - the actual DOM element or the ID of the element
+				replace - the string to replace the selection with
+
+			Returns:
+				*object* - the current selection (start, end, length, text)
+		*/
+		elm_replace : function (e, replace) {
+			e = typeof e === 'string' ? document.getElementById(e) : e;
+			if(e.jquery) { e = e.get(0); }
+			var sel = $.vakata.selection.elm_get(e),
+				beg = sel.start,
+				end = beg + replace.length;
+			e.value = e.value.substr(0, beg) + replace + e.value.substr(sel.end, e.value.length);
+			$.vakata.selection.elm_set(e, beg, end);
+			return { 
+				'start'		: beg, 
+				'end'		: end, 
+				'length'	: replace.length, 
+				'text'		: replace
+			};
+		},
+		/* 
+			Function: $.vakata.selection.elm_get_caret
+			Returns the caret position in the element.
+
+			Parameters:
+				e - the actual DOM element or the ID of the element
+
+			Returns:
+				*number* - the current caret position
+		*/
+		elm_get_caret : function (e) {
+			return $.vakata.selection.elm_get(e).end;
+		},
+		/* 
+			Function: $.vakata.selection.elm_set_caret
+			Sets the caret position in the element.
+
+			Parameters:
+				e - the actual DOM element or the ID of the element
+				pos - the position to move the caret to
+
+			Returns:
+				*object* - the current selection
+		*/
+		elm_set_caret : function (e, pos) {
+			return $.vakata.selection.elm_set(e, pos, pos);
+		},
+		/* 
+			Function: $.vakata.selection.elm_get_caret_position
+			Returns the caret position in pixels relative to the element.
+
+			Parameters:
+				e - the actual DOM element or the ID of the element
+
+			Returns:
+				*object* - the current position (with _left_ and _top_ values)
+		*/
+		elm_get_caret_position : function (e) {
+			e = typeof e === 'string' ? document.getElementById(e) : e;
+			if(e.jquery) { e = e.get(0); }
+			var p = $.vakata.selection.elm_get_caret(e),
+				s = e.value.substring(0, p).replace(/&/g,'&amp;').replace(/</ig,'&lt;').replace(/>/ig,'&gt;').replace(/\r/g, '').replace(/\t/g,'&#10;').replace(/\n/ig, '<br />'),
+				b = $.vakata.get_scrollbar_width(),
+				w = $(e).width(),
+				h = $(e).height();
+			if(e.scrollHeight > h) { w -= b; }
+			if(e.scrollWidth > w)  { h -= b; }
+			e = $(e);
+			e = $('<div />').html(s).css({
+						'background': 'red',
+						'width'		: w + 'px',
+						'height'	: 'auto',
+						'position'	: 'absolute',
+						'left'		: '0px',
+						'top'		: '-10000px',
+
+						'fontSize'		: e.css('fontSize'),
+						'fontFamily'	: e.css('fontFamily'),
+						'fontWeight'	: e.css('fontWeight'),
+						'fontVariant'	: e.css('fontVariant'),
+						'fontStyle'		: e.css('fontStyle'),
+						'textTransform'	: e.css('textTransform'),
+						'lineHeight'	: e.css('lineHeight'),
+						'whiteSpace'	: 'pre-wrap'
+					});
+			e.append('<span class="caret">&nbsp;</span>').appendTo('body');
+			s = e.find('span.caret');
+			p = s.offset();
+			p.top = p.top + 10000 + s.height();
+			e.remove();
+			return p;
+		}
+	};
+})(jQuery);
+
+
+
+(function ($) {
+	/*
+		Function: $.vakata_highlight
+		Hightlight words in the matched elements
+
+		Parameters:
+			settings - if a string is passed, it is used to search and highlight, if an array of strings is passed, each string is highlighted, you can also pass an object, containing a _words_ string or array, a _color_ string or array, a _css_class_ string.
+	*/
+	$.fn.vakata_highlight = function (settings) {
+		var _return = this;
+		if(typeof settings === 'string') { 
+			settings = [ settings ]; 
+		}
+		if($.isArray(settings)) {
+			settings = { 'words' : settings };
+		}
+		settings = $.extend(true, {}, { 'css_class' : 'vakata-highlight', 'words' : [], 'color' : '#99ccff' }, settings);
+		if(settings.words.length) {
+			this.each(function () {
+				var t = $(this);
+				$.each(settings.words, function (i,v) {
+					var color = false;
+					if(typeof settings.color === 'string') {
+						color = settings.color;
+					}
+					if($.isArray(settings.color) && typeof settings.color[i] === 'string') {
+						color = settings.color[i];
+					}
+					t
+						.find(':vakata_icontains("' + v.replace(/\"/ig,'') + '")')
+						.filter('strong, span, li, p, h1, h2, h3, h4, h5, h6, div, u, em, i, dt, dd')
+						.contents()
+						.filter(function() { return this.nodeType === 3; })
+						.each(function () {
+							if(this.nodeValue.toLowerCase().indexOf(v.toLowerCase()) >= 0) {
+								this.nodeValue = this.nodeValue.replace(new RegExp('(' + v.replace(/([\-.*+?\^${}()|\[\]\/\\])/g,"\\$1") + ')', 'ig'), '|{{{$1}}}|');
+								var o = $(this).parent();
+								o.html(o.html().replace(/\|\{\{\{/g,'<span class="' + settings.css_class + ' ' + settings.css_class + '-' + i + '" ' + ( typeof color === 'string' ? ' style="background:' + color + ';" ' : '' ) + '>').replace(/\}\}\}\|/g,'</span>'));
+							}
+						});
+				});
+			});
+		}
+		return _return;
 	};
 })(jQuery);

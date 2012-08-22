@@ -16,8 +16,8 @@ This plugin enables selecting, deselecting and hovering tree items.
 						var s			= this.get_settings(true).ui,
 							obj			= this.get_node(e.currentTarget),
 							is_selected	= this.is_selected(obj),
-							is_multiple	= s.select_multiple_modifier == "on" || (s.select_multiple_modifier !== false && e && e[s.select_multiple_modifier + "Key"]),
-							is_range	= s.select_multiple_modifier == "on" || (s.select_range_modifier !== false && e && e[s.select_range_modifier + "Key"] && this.data.ui.last_selected && this.data.ui.last_selected[0] !== obj[0] && this.data.ui.last_selected.parent()[0] === obj.parent()[0]);
+							is_multiple	= s.select_multiple_modifier === "on" || (s.select_multiple_modifier !== false && e && e[s.select_multiple_modifier + "Key"]),
+							is_range	= s.select_multiple_modifier === "on" || (s.select_range_modifier !== false && e && e[s.select_range_modifier + "Key"] && this.data.ui.last_selected && this.data.ui.last_selected[0] !== obj[0] && this.data.ui.last_selected.parent()[0] === obj.parent()[0]);
 
 						switch(!0) {
 							case (is_range && this.data.ui.last_selected !== false):
@@ -81,7 +81,7 @@ This plugin enables selecting, deselecting and hovering tree items.
 			select_node : function (obj) {
 				var t = this;
 				obj = this.get_node(obj);
-				if(obj == -1 || !obj || !obj.length || this.is_loading(obj)) { return false; }
+				if(obj === -1 || !obj || !obj.length || this.is_loading(obj)) { return false; }
 				obj.children("a").addClass("jstree-clicked");
 				this.data.ui.last_selected = obj;
 				this.data.ui.selected = this.data.ui.selected.add(obj);
@@ -102,7 +102,7 @@ This plugin enables selecting, deselecting and hovering tree items.
 			deselect_all : function (context) {
 				var ret = context ? $(context).find("a.jstree-clicked").parent() : this.get_container().find("a.jstree-clicked").parent();
 				ret.children("a.jstree-clicked").removeClass("jstree-clicked");
-				this.data.ui.selected = $([]);
+				this.data.ui.selected = $();
 				this.data.ui.last_selected = false;
 				this.__callback({ "obj" : ret });
 			},
@@ -114,8 +114,8 @@ This plugin enables selecting, deselecting and hovering tree items.
 				obj = this.get_node(obj);
 				if(!start_node) { s = true; start_node = this.data.ui.last_selected; }
 				start_node = this.get_node(start_node);
-				if(obj == -1 || !obj || !obj.length || this.is_loading(obj)) { return false; }
-				if(start_node == -1 || !start_node || !start_node.length || this.is_loading(start_node)) { return false; }
+				if(obj === -1 || !obj || !obj.length || this.is_loading(obj)) { return false; }
+				if(start_node === -1 || !start_node || !start_node.length || this.is_loading(start_node)) { return false; }
 
 				if(!keep_old_selection) { this.deselect_all(); }
 				i = (obj.index() < start_node.index());
@@ -131,7 +131,7 @@ This plugin enables selecting, deselecting and hovering tree items.
 			},
 			select_one : function (obj, keep_old_selection) {
 				obj = this.get_node(obj);
-				if(obj == -1 || !obj || !obj.length || this.is_loading(obj)) { return false; }
+				if(obj === -1 || !obj || !obj.length || this.is_loading(obj)) { return false; }
 				if(!keep_old_selection) { this.deselect_all(); }
 				else { 
 					if(
