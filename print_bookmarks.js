@@ -303,6 +303,14 @@ function bindTreeEvents (tree) {
 		e.reference = this;
 		dbClickNode(e);
 	});
+	
+	//Override check function
+	var ins = $.jstree._reference(tree);
+	var oldCheck = ins.check;
+	ins.check = function (checking, obj, parent, index) {
+		if(!oldCheck.call(this, checking, obj, parent, index)) { return false; }
+		return checkNode.call(this, checking, obj, parent, index);
+	}
 }
 
 function nodeTojsTree(node)
@@ -372,6 +380,26 @@ function normalizeUrl(url)
 	} else {
 		return url;
 	}
+}
+
+function checkNode (checking, obj, parent, index) {
+	switch(checking) {
+		case "create_node":
+			break;
+		case "rename_node":
+			break;
+		case "move_node":
+			//Dont allow moving outside the folders
+			if(parent === -1) { return false; }
+			//Dont allow moving inside a bookmark
+			if(parent.data().chromeNode.url) { return false; }
+			break;
+		case "copy_node":
+			break;
+		case "delete_node":
+			break;
+		}
+	return true;
 }
 
 function renameNode (e, data) {
