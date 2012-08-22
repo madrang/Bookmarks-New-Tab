@@ -37,7 +37,7 @@ function initBookmarks()
 			select_node: true,
 			show_at_node: false,
 			
-			items:{
+			items: {
 				create: {
 					separator_before: false,
 					separator_after: true,
@@ -257,7 +257,6 @@ function initBookmarks()
 	bookmarksToolbar.jstree($.extend(true, {}, treeSetup, toolSetup));
 	bindTreeEvents(bookmarksToolbar);
 	
-	
 	/*--- Other bookmarks ---*/
 	var otherBookmarks = $("body div.other-bookmarks");
 	var otherSetup = {
@@ -290,46 +289,6 @@ function refreshTree () {
 	}
 }
 
-function renameNode (e, data) {
-	var nodeData = data.rslt.obj.data();
-	var changes = {
-		title: data.rslt.title
-	};
-	refreshEnabled = false;
-	chrome.bookmarks.update(nodeData.chromeNode.id, changes, function(){ refreshEnabled = true; });
-}
-	
-function deleteNode (e, data) {
-	var nodeData = data.rslt.obj.data();
-	refreshEnabled = false;
-	
-	var enableRefresh = function() { refreshEnabled = true; };
-	if (nodeData.chromeNode.children)
-		chrome.bookmarks.removeTree(nodeData.chromeNode.id, enableRefresh);
-	else
-		chrome.bookmarks.remove(nodeData.chromeNode.id, enableRefresh);
-}
-	
-function dbClickNode (e) {
-	var inst = $.jstree._reference(e.reference);
-	var obj = inst.get_node(e.reference);
-	var nodeData = obj.data();
-	
-	if(nodeData.chromeNode.url) {
-		if(e.ctrlKey) {
-			window.open(nodeData.chromeNode.url);
-		} else {
-			location.href = nodeData.chromeNode.url;
-		}
-	} else {
-		//Is a folder, open or close.
-		if(inst.is_open(obj))
-			inst.close_node(obj);
-		else
-			inst.open_node(obj);
-	}
-	e.stopPropagation();
-}
 
 function moveNode (e, data) {
 	alert("Moved `" + data.inst.get_text(data.rslt.obj) + "` inside `" + (data.rslt.parent === -1 ? 'the main container' : data.inst.get_text(data.rslt.parent)) + "` at index " + data.rslt.position);
@@ -413,4 +372,45 @@ function normalizeUrl(url)
 	} else {
 		return url;
 	}
+}
+
+function renameNode (e, data) {
+	var nodeData = data.rslt.obj.data();
+	var changes = {
+		title: data.rslt.title
+	};
+	refreshEnabled = false;
+	chrome.bookmarks.update(nodeData.chromeNode.id, changes, function(){ refreshEnabled = true; });
+}
+
+function deleteNode (e, data) {
+	var nodeData = data.rslt.obj.data();
+	refreshEnabled = false;
+	
+	var enableRefresh = function() { refreshEnabled = true; };
+	if (nodeData.chromeNode.children)
+		chrome.bookmarks.removeTree(nodeData.chromeNode.id, enableRefresh);
+	else
+		chrome.bookmarks.remove(nodeData.chromeNode.id, enableRefresh);
+}
+
+function dbClickNode (e) {
+	var inst = $.jstree._reference(e.reference);
+	var obj = inst.get_node(e.reference);
+	var nodeData = obj.data();
+	
+	if(nodeData.chromeNode.url) {
+		if(e.ctrlKey) {
+			window.open(nodeData.chromeNode.url);
+		} else {
+			location.href = nodeData.chromeNode.url;
+		}
+	} else {
+		//Is a folder, open or close.
+		if(inst.is_open(obj))
+			inst.close_node(obj);
+		else
+			inst.open_node(obj);
+	}
+	e.stopPropagation();
 }
