@@ -1,6 +1,6 @@
 {
 	"name": "Bookmarks New Tab",
-	"version": "0.0.0.6",
+	"version": "0.0.0.7",
 	"description": "A New Tab replacement that shows the Bookmarks.",
 	"manifest_version": 2,
 	"minimum_chrome_version": "18.0.0.0",
