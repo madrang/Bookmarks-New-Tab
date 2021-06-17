@@ -45,6 +45,7 @@ div.other-bookmarks {
 	padding-bottom: 80px;
 }
 .dock-container {
+	display: none;
 	position: absolute;
 	height: 50px;
 	padding-left: 20px;
