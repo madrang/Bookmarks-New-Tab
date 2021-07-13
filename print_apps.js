@@ -18,6 +18,7 @@ function printApps()
 	}
 	
 	$('body div.dock-container').empty();
+	$('body div.dock-container').show();
 
 	// Add other menu items.
 	/*
