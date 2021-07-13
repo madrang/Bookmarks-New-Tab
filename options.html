@@ -1,5 +1,5 @@
 <html>
-	<html>
+	<head>
 		
 		<title>Bookmarks New Tab - Options</title>
 		
@@ -7,29 +7,31 @@
 		
 		<script src="libs/jquery.min.js"></script>
 		<script src="libs/jquery-ui.min.js"></script>
-		
+		<script src="options.js"></script>
 	</head>
 	<body>
 		<div class="optionsContainer">
 			<h2>Options</h2>
 			
-			JsTree Theme:
-			<select id="jsTreeTheme-Menu" style="width: 200px;" onchange="localStorage.jsTree_theme = $(this).val();">
-				<option>default</option>
-				<option>classic</option>
-				<option>apple</option>
-			</select>
-			Show Dots:
-			<input type="checkbox" id="jsTreeTheme-Dots" onchange="localStorage.jsTree_themeDots = $(this).val();">
-		
+			<div>
+				JsTree Theme:
+				<select id="jsTreeTheme-Menu" style="width: 200px;">
+					<option>default</option>
+					<option>classic</option>
+					<option>apple</option>
+				</select>
+			</div>
+			<div>
+				<input type="checkbox" id="jsTreeTheme-Dots">
+				Show Dots
+			</div>
+			<div>
+				<input type="checkbox" id="hideApps">
+				Hide apps dock
+			</div>
 		</div>
 		
 		<a href="about.html">About</a>
-		
-		<script>
-			$("#jsTreeTheme-Menu").val(localStorage.jsTree_theme);
-			$("#jsTreeTheme-Dots").val(localStorage.jsTree_themeDots);
-		</script>
 	</body>
 </html>
 

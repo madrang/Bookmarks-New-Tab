@@ -45,6 +45,7 @@ div.other-bookmarks {
 	padding-bottom: 80px;
 }
 .dock-container {
+	display: none;
 	position: absolute;
 	height: 50px;
 	padding-left: 20px;
@@ -101,4 +102,8 @@ li.logo {
 	border: 1px solid #EEE;
 	border-radius: 5px 5px 5px 5px;
 	box-shadow: #577AA2 0 0 10px;
+}
+
+.optionsContainer {
+	margin-top: 20px;
 }

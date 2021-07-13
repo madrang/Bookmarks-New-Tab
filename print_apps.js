@@ -12,8 +12,13 @@ function initApps()
 
 function printApps()
 {
-	$('body div.dock-container').empty();
+	if (localStorage.hideApps == "true") {
+		$('body div.dock-container').remove();
+		return;
+	}
 	
+	$('body div.dock-container').empty();
+
 	// Add other menu items.
 	/*
 	var AboutItem = {
