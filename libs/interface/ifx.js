@@ -22,6 +22,10 @@ jQuery.fxCheckTag = function(e)
 		return true;
 };
 
+jQuery.curCSS = function(element, prop, val) {
+    return jQuery(element).css(prop, val);
+};
+
 /**
  * Destroy the wrapper used for some animations
  */

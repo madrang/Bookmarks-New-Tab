@@ -59,7 +59,7 @@ function initBookmarks() {
                     , action: function (data) {
                         var inst = $.jstree.reference(data.reference);
                         var obj = inst.get_node(data.reference);
-                        var nodeData = obj.data();
+                        var nodeData = obj.data;
 
                         var create = function(v,m,f) {
                             if(v !== true || f.newTitle == null || f.newTitle == "") {
@@ -102,7 +102,7 @@ function initBookmarks() {
                     , action: function (data) {
                         var inst = $.jstree.reference(data.reference);
                         var obj = inst.get_node(data.reference);
-                        var nodeData = obj.data();
+                        var nodeData = obj.data;
 
                         var rename = function(v,m,f) {
                             if(v !== true) {
@@ -126,10 +126,8 @@ function initBookmarks() {
                             //TODO Warn the user.
                             return;
                         };
-                        var txt = 'Title:<br />' +
-                            '<input type="text" id="newTitleInput" name="newTitle" value="' + nodeData.chromeNode.title + '" />';
-                        
-                        $.prompt(txt, { buttons: btOkCancel, callback: rename });
+                        const htmlTxt = `Title:<br /><input type="text" id="newTitleInput" name="newTitle" value="${nodeData.chromeNode.title}" style="width:100%" />`;
+                        $.prompt(htmlTxt, { buttons: btOkCancel, callback: rename });
                     }
                 }
                 , remove: {
@@ -141,7 +139,7 @@ function initBookmarks() {
                     , action: function (data) {
                         var inst = $.jstree.reference(data.reference);
                         var obj = inst.get_node(data.reference);
-                        var nodeData = obj.data();
+                        var nodeData = obj.data;
 
                         //If childrens Prompt before deleting.
                         if (nodeData.chromeNode.children) {
@@ -202,7 +200,7 @@ function initBookmarks() {
                     , action: function (data) {
                         var inst = $.jstree.reference(data.reference);
                         var obj = inst.get_node(data.reference);
-                        var nodeData = obj.data();
+                        var nodeData = obj.data;
 
                         if(nodeData.chromeNode.url) {
                             location.href = nodeData.chromeNode.url;
@@ -219,7 +217,7 @@ function initBookmarks() {
                     , action: function (data) {
                         var inst = $.jstree.reference(data.reference);
                         var obj = inst.get_node(data.reference);
-                        var nodeData = obj.data();
+                        var nodeData = obj.data;
 
                         if(nodeData.chromeNode.url) {
                             window.open(nodeData.chromeNode.url);
@@ -407,7 +405,7 @@ function checkNode (checking, obj, parent, index) {
             //Dont allow moving outside the folders
             if(parent === -1) { return false; }
             //Dont allow moving inside a bookmark
-            if(parent.data().chromeNode.url) { return false; }
+            if(parent.data.chromeNode.url) { return false; }
             break;
         case "copy_node":
             break;
@@ -419,15 +417,15 @@ function checkNode (checking, obj, parent, index) {
 
 function moveNode (e, data) {
     const dest = {
-        parentId: data.rslt.parent.data().chromeNode.id,
+        parentId: data.rslt.parent.data.chromeNode.id,
         index: data.rslt.position
     };
     refreshEnabled = false;
-    chrome.bookmarks.move(data.rslt.obj.data().chromeNode.id, dest, function(){ refreshEnabled = true; });
+    chrome.bookmarks.move(data.rslt.obj.data.chromeNode.id, dest, function(){ refreshEnabled = true; });
 }
 
 function renameNode (e, data) {
-    const nodeData = data.rslt.obj.data();
+    const nodeData = data.rslt.obj.data;
     const changes = {
         title: data.rslt.title
     };
@@ -436,7 +434,7 @@ function renameNode (e, data) {
 }
 
 function deleteNode (e, data) {
-    const nodeData = data.rslt.obj.data();
+    const nodeData = data.rslt.obj.data;
     refreshEnabled = false;
 
     const enableRefresh = function() { refreshEnabled = true; };
@@ -450,7 +448,7 @@ function deleteNode (e, data) {
 function dbClickNode (e) {
     const inst = $.jstree.reference(e.reference || e.target);
     const obj = inst.get_node(e.reference || e.target);
-    const nodeData = (typeof obj.data === "function" ? obj.data() : obj.data);
+    const nodeData = obj.data;
 
     if(nodeData.chromeNode.url) {
         if(e.ctrlKey) {
