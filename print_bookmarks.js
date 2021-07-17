@@ -1,10 +1,18 @@
 $(document).ready(initBookmarks);
 
-var refreshEnabled = true;
+jQuery.fn.extend({
+    live: function (event, callback) {
+       if (this.selector) {
+            jQuery(document).on(event, this.selector, callback);
+        }
+        return this;
+    }
+});
+
+const refreshEnabled = true;
 var btOkCancel = { Ok: true, Cancel: false };
 
-function initBookmarks()
-{
+function initBookmarks() {
     // If something happend Refresh the Trees
     chrome.bookmarks.onChanged.addListener(refreshTree);
     chrome.bookmarks.onChildrenReordered.addListener(refreshTree);
@@ -24,12 +32,19 @@ function initBookmarks()
     //Set theme path.
     jQuery.jstree.THEMES_DIR = "libs/jstree/themes/";
 
-    var treeSetup = {
-        json: {
+    const treeSetup = {
+        core: {
+            themes: {
+                name: localStorage.jsTree_theme
+                , dots: Boolean(window.localStorage.getItem("jsTree_themeDots"))
+                , stripes: true
+                , url: `/libs/jstree/themes/${localStorage.jsTree_theme || "default"}/style.css`
+            }
+        }
+        , json: {
             progressive_render: progressiveRender
             , progressive_unload: progressiveUnload
         }
-
         , contextmenu: {
             select_node: true
             , show_at_node: false
@@ -42,7 +57,7 @@ function initBookmarks()
                     , icon: false
                     , label: "Create"
                     , action: function (data) {
-                        var inst = $.jstree._reference(data.reference);
+                        var inst = $.jstree.reference(data.reference);
                         var obj = inst.get_node(data.reference);
                         var nodeData = obj.data();
 
@@ -85,7 +100,7 @@ function initBookmarks()
                     , icon: false
                     , label: "Rename"
                     , action: function (data) {
-                        var inst = $.jstree._reference(data.reference);
+                        var inst = $.jstree.reference(data.reference);
                         var obj = inst.get_node(data.reference);
                         var nodeData = obj.data();
 
@@ -124,7 +139,7 @@ function initBookmarks()
                     , icon: false
                     , label: "Delete"
                     , action: function (data) {
-                        var inst = $.jstree._reference(data.reference);
+                        var inst = $.jstree.reference(data.reference);
                         var obj = inst.get_node(data.reference);
                         var nodeData = obj.data();
 
@@ -185,7 +200,7 @@ function initBookmarks()
                     , icon: false
                     , label: "Open Link"
                     , action: function (data) {
-                        var inst = $.jstree._reference(data.reference);
+                        var inst = $.jstree.reference(data.reference);
                         var obj = inst.get_node(data.reference);
                         var nodeData = obj.data();
 
@@ -202,7 +217,7 @@ function initBookmarks()
                     , icon: false
                     , label: "Open Link in New Tab"
                     , action: function (data) {
-                        var inst = $.jstree._reference(data.reference);
+                        var inst = $.jstree.reference(data.reference);
                         var obj = inst.get_node(data.reference);
                         var nodeData = obj.data();
 
@@ -212,11 +227,6 @@ function initBookmarks()
                     }
                 }
             }
-        }
-
-        , themes: {
-            theme: localStorage.jsTree_theme
-            , dots: Boolean(window.localStorage.getItem("jsTree_themeDots"))
         }
 
         , plugins: [
@@ -235,18 +245,19 @@ function initBookmarks()
     };
 
     /*--- Bookmarks toolbar ---*/
-    var bookmarksToolbar = $("body div.bookmarks-toolbar");
-    var toolSetup = {
-        json: {
-            data: function(n, apply) {
-                if(n === -1) {
-                    chrome.bookmarks.getTree(function(bookmarksTree) {
-                        var TreeChildArray = [];
-                        TreeChildArray.push(nodeTojsTree(bookmarksTree[0].children[0]));
-                        apply.call(this, TreeChildArray);
-                    });
+    const bookmarksToolbar = $("body div.bookmarks-toolbar");
+    const toolSetup = {
+        core: {
+            data: function(parentTree, apply) {
+                if(typeof parentTree !== "object" || parentTree.id !== "#") {
                     return;
                 }
+                const selfTree = this;
+                chrome.bookmarks.getTree(function(bookmarksTree) {
+                    apply.call(selfTree, [
+                        nodeTojsTree(bookmarksTree[0].children[0])
+                    ]);
+                });
             }
         }
 
@@ -257,21 +268,26 @@ function initBookmarks()
     };
     bookmarksToolbar.jstree($.extend(true, {}, treeSetup, toolSetup));
     bindTreeEvents(bookmarksToolbar);
+    bookmarksToolbar.bind("state_ready.jstree", function () {
+        let treeBackColor = bookmarksToolbar.css("background-color");
+        $("body").css("background-color", treeBackColor);
+    });
 
     /*--- Other bookmarks ---*/
-    var otherBookmarks = $("body div.other-bookmarks");
-    var otherSetup = {
+    const otherBookmarks = $("body div.other-bookmarks");
+    const otherSetup = {
         //Node Data
-        json: {
-            data: function(n, apply) {
-                if(n === -1) {
-                    chrome.bookmarks.getTree(function(bookmarksTree) {
-                        var TreeChildArray = [];
-                        TreeChildArray.push(nodeTojsTree(bookmarksTree[0].children[1]));
-                        apply.call(this, TreeChildArray);
-                    });
+        core: {
+            data: function(parentTree, apply) {
+                if(typeof parentTree !== "object" || parentTree.id !== "#") {
                     return;
                 }
+                const treeInst = this;
+                chrome.bookmarks.getTree(function(bookmarksTree) {
+                    apply.call(treeInst, [
+                        nodeTojsTree(bookmarksTree[0].children[1])
+                    ]);
+                });
             }
         }
 
@@ -282,6 +298,11 @@ function initBookmarks()
     };
     otherBookmarks.jstree($.extend(true, {}, treeSetup, otherSetup));
     bindTreeEvents(otherBookmarks);
+
+    $("#jstree-div a").live("dblclick", function (e) {
+        dbClickNode(e);
+    });
+
 }
 
 function refreshTree () {
@@ -295,29 +316,32 @@ function bindTreeEvents (tree) {
     tree.bind("delete_node.jstree", deleteNode);
     tree.bind("move_node.jstree", moveNode);
 
+    tree.bind("dblclick.jstree", function (e) {
+        e.reference = $(e.target).closest("li");
+        dbClickNode(e);
+    });
+
     tree.find("ul li").live("dblclick", function(e) {
         e.reference = this;
         dbClickNode(e);
     });
 
     //Override check function
-    var ins = $.jstree._reference(tree);
-    var oldCheck = ins.check;
+    let ins = $.jstree.reference(tree);
+    let oldCheck = ins.check;
     ins.check = function (checking, obj, parent, index) {
-        if(!oldCheck.call(this, checking, obj, parent, index)) { return false; }
+        if(!oldCheck.call(this, checking, obj, parent, index)) {
+            return false;
+        }
         return checkNode.call(this, checking, obj, parent, index);
     }
 }
 
-function nodeTojsTree(node)
-{
+function nodeTojsTree(node) {
     const treeNode = {
-        title: node.title
+        text: node.title
         , data: {
-            jstree: {
-                //icon:false
-            }
-            , chromeNode: node
+            chromeNode: node
         }
         , li_attr: { id: "li.node.id" + node.id }
         , a_attr: {}
@@ -325,19 +349,19 @@ function nodeTojsTree(node)
 
     //If url is NULL or missing, it is a folder.
     if (node.url) {
-        if(treeNode.title == null || treeNode.title == "") {
-            treeNode.title = node.url;
+        if(treeNode.text == null || treeNode.text == "") {
+            treeNode.text = node.url;
         }
 
         switch(localStorage.jsTree_FaviconService) {
         case "chrome":
-            treeNode.data.jstree.icon = "chrome://favicon/" + node.url;
+            treeNode.icon = "chrome://favicon/" + node.url;
             break;
         case "google":
-            treeNode.data.jstree.icon = "https://www.google.com/s2/favicons?domain=" + node.url;
+            treeNode.icon = "https://www.google.com/s2/favicons?domain=" + node.url;
             break;
         default:
-            treeNode.data.jstree.icon = localStorage.jsTree_FaviconService + node.url;
+            treeNode.icon = localStorage.jsTree_FaviconService + node.url;
             break;
         }
 
@@ -347,12 +371,11 @@ function nodeTojsTree(node)
 
         return treeNode;
     } else {
-        var childs;
-        treeNode.data.jstree.children = [];
+        treeNode.children = [];
 
-        var addChild = function(childs){
-            for (var i in childs) {
-                treeNode.data.jstree.children.push(nodeTojsTree(childs[i]));
+        const addChild = function(childs){
+            for (let i in childs) {
+                treeNode.children.push(nodeTojsTree(childs[i]));
             }
         };
 
@@ -366,8 +389,7 @@ function nodeTojsTree(node)
     return treeNode;
 }
 
-function normalizeUrl(url)
-{
+function normalizeUrl(url) {
     if (!url.match(/^https?:\/\//)) {
         return 'http://' + url;
     } else {
@@ -426,9 +448,9 @@ function deleteNode (e, data) {
 }
 
 function dbClickNode (e) {
-    const inst = $.jstree._reference(e.reference);
-    const obj = inst.get_node(e.reference);
-    const nodeData = obj.data();
+    const inst = $.jstree.reference(e.reference || e.target);
+    const obj = inst.get_node(e.reference || e.target);
+    const nodeData = (typeof obj.data === "function" ? obj.data() : obj.data);
 
     if(nodeData.chromeNode.url) {
         if(e.ctrlKey) {

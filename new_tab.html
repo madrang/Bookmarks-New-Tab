@@ -1,83 +1,66 @@
 <html>
-	<html>
-		
-		<title>Bookmarks - New Tab</title>
-		
-		<link rel="stylesheet" type="text/css" href="style.css" />
-		<link rel="stylesheet" type="text/css" href="libs/impromptu/default.css" />
-		
-		<script src="libs/jquery.min.js"></script>
-		<script src="libs/jquery-ui.min.js"></script>
-		
-		<script src="libs/interface/accordion.js"></script>
-		<script src="libs/interface/carousel.js"></script>
-		<script src="libs/interface/easing.js"></script>
-		<script src="libs/interface/fisheye.js"></script>
-		<script src="libs/interface/iautocompleter.js"></script>
-		<script src="libs/interface/iautoscroller.js"></script>
-		<script src="libs/interface/idrag.js"></script>
-		<script src="libs/interface/idrop.js"></script>
-		<script src="libs/interface/iexpander.js"></script>
-		<script src="libs/interface/ifx.js"></script>
-		<script src="libs/interface/ifxblind.js"></script>
-		<script src="libs/interface/ifxbounce.js"></script>
-		<script src="libs/interface/ifxdrop.js"></script>
-		<script src="libs/interface/ifxfold.js"></script>
-		<script src="libs/interface/ifxhighlight.js"></script>
-		<script src="libs/interface/ifxopenclose.js"></script>
-		<script src="libs/interface/ifxpulsate.js"></script>
-		<script src="libs/interface/ifxscale.js"></script>
-		<script src="libs/interface/ifxscrollto.js"></script>
-		<script src="libs/interface/ifxshake.js"></script>
-		<script src="libs/interface/ifxslide.js"></script>
-		<script src="libs/interface/ifxtransfer.js"></script>
-		<script src="libs/interface/imagebox.js"></script>
-		<script src="libs/interface/iresizable.js"></script>
-		<script src="libs/interface/iselect.js"></script>
-		<script src="libs/interface/islider.js"></script>
-		<script src="libs/interface/islideshow.js"></script>
-		<script src="libs/interface/isortables.js"></script>
-		<script src="libs/interface/itooltip.js"></script>
-		<script src="libs/interface/ittabs.js"></script>
-		<script src="libs/interface/iutil.js"></script>
-		
-		<script src="libs/jstree/_lib/jquery.hotkeys.js"></script>
-		
-		<script src="libs/jstree/vakata.js"></script>
-		<script src="libs/jstree/jstree.js"></script>
-		<script src="libs/jstree/jstree.json.js"></script>
-		
-		<script src="libs/jstree/jstree.themes.js"></script>
-		<script src="libs/jstree/jstree.ui.js"></script>
-		<script src="libs/jstree/jstree.state.js"></script>
-		
-		<script src="libs/jstree/jstree.dnd.js"></script>
-		<script src="libs/jstree/jstree.contextmenu.js"></script>
-		
-		<script src="libs/impromptu/jquery-impromptu.js"></script>
-		
-		<script src="print_bookmarks.js"></script>
-		<script src="print_apps.js"></script>
-		
-	</head>
-	<body>
-		
-		<!--top dock -->
-		<div class="dock" id="dock">
-			<div class="dock-container">
-			</div> 
-		</div>
-		
-		<div class="bookmarks-container" id="bookmarks-tree">
-			<div class="bookmarks-toolbar">
-				<h2>Bookmarks Toolbar</h2>
-			</div>
-			
-			<div class="other-bookmarks">
-				<h2>Other Bookmarks</h2>
-			</div>
-		</div>
-		
-	</body>
+    <html>
+
+        <title>Bookmarks - New Tab</title>
+
+        <link rel="stylesheet" type="text/css" href="style.css" />
+        <link rel="stylesheet" type="text/css" href="libs/impromptu/jquery-impromptu.min.css" />
+
+        <script src="libs/jquery.min.js"></script>
+        <script src="libs/jquery-ui.min.js"></script>
+
+        <script src="libs/interface/accordion.js"></script>
+        <script src="libs/interface/carousel.js"></script>
+        <script src="libs/interface/easing.js"></script>
+        <script src="libs/interface/fisheye.js"></script>
+        <script src="libs/interface/iautocompleter.js"></script>
+        <script src="libs/interface/iautoscroller.js"></script>
+        <script src="libs/interface/idrag.js"></script>
+        <script src="libs/interface/idrop.js"></script>
+        <script src="libs/interface/iexpander.js"></script>
+        <script src="libs/interface/ifx.js"></script>
+        <script src="libs/interface/ifxblind.js"></script>
+        <script src="libs/interface/ifxbounce.js"></script>
+        <script src="libs/interface/ifxdrop.js"></script>
+        <script src="libs/interface/ifxfold.js"></script>
+        <script src="libs/interface/ifxhighlight.js"></script>
+        <script src="libs/interface/ifxopenclose.js"></script>
+        <script src="libs/interface/ifxpulsate.js"></script>
+        <script src="libs/interface/ifxscale.js"></script>
+        <script src="libs/interface/ifxscrollto.js"></script>
+        <script src="libs/interface/ifxshake.js"></script>
+        <script src="libs/interface/ifxslide.js"></script>
+        <script src="libs/interface/ifxtransfer.js"></script>
+        <script src="libs/interface/imagebox.js"></script>
+        <script src="libs/interface/iresizable.js"></script>
+        <script src="libs/interface/iselect.js"></script>
+        <script src="libs/interface/islider.js"></script>
+        <script src="libs/interface/islideshow.js"></script>
+        <script src="libs/interface/isortables.js"></script>
+        <script src="libs/interface/itooltip.js"></script>
+        <script src="libs/interface/ittabs.js"></script>
+        <script src="libs/interface/iutil.js"></script>
+
+        <script src="libs/jstree/jstree.min.js"></script>
+        <script src="libs/impromptu/jquery-impromptu.min.js"></script>
+
+        <script src="print_bookmarks.js"></script>
+        <script src="print_apps.js"></script>
+    </head>
+    <body>
+        <!--top dock -->
+        <div class="dock" id="dock">
+            <div class="dock-container">
+            </div> 
+        </div>
+        <div class="bookmarks-container" id="bookmarks-tree">
+            <div class="bookmarks-toolbar">
+                <h2>Bookmarks Toolbar</h2>
+            </div>
+            <div class="other-bookmarks">
+                <h2>Other Bookmarks</h2>
+            </div>
+        </div>
+    </body>
 </html>
 

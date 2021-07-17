@@ -1,109 +1,109 @@
 body {
-	font-family: Arial, sans-serif;
-	font-size: 10.5pt;
-	
-	margin-top: 0em;
-	margin-right: 2em;
-	margin-bottom: 5em;
-	margin-left: 3em;
-	
-	line-height: 130%;
-	overflow-x: hidden;
+    font-family: Arial, sans-serif;
+    font-size: 10.5pt;
+
+    margin-top: 0em;
+    margin-right: 2em;
+    margin-bottom: 5em;
+    margin-left: 3em;
+
+    line-height: 130%;
+    overflow-x: hidden;
 }
 
 img {
-	border: none;
+    border: none;
 }
 
 /*--- Bookmarks Tree ---*/
 div.bookmarks-container {
-	max-width: 80em;
-	margin: 0 auto;
+    max-width: 80em;
+    margin: 0 auto;
 }
 
 div.bookmarks-toolbar {
-	float: left;
-	width: 45%;
-	
-	margin-right: 5%;
-	margin-bottom: 20px;
+    float: left;
+    width: 45%;
+
+    margin-right: 5%;
+    margin-bottom: 20px;
 }
 div.other-bookmarks {
-	float: right;
-	width: 45%;
-	
-	margin-right: 5%;
-	margin-bottom: 20px;
+    float: right;
+    width: 45%;
+
+    margin-right: 5%;
+    margin-bottom: 20px;
 }
 
 /*--- Dock Menu ---*/
 .dock {
-	position: relative;
-	height: 50px;
-	text-align: center;
-	
-	padding-bottom: 80px;
+    position: relative;
+    height: 50px;
+    text-align: center;
+    
+    padding-bottom: 80px;
 }
 .dock-container {
-	display: none;
-	position: absolute;
-	height: 50px;
-	padding-left: 20px;
-	
-	background: url(images/dock-bg.gif);
-	
-	border-bottom-right-radius: 10px 10px;
-	border-bottom-left-radius: 10px 10px;
+    display: none;
+    position: absolute;
+    height: 50px;
+    padding-left: 20px;
+    
+    background: url(images/dock-bg.gif);
+    
+    border-bottom-right-radius: 10px 10px;
+    border-bottom-left-radius: 10px 10px;
 }
 a.dock-item {
-	display: block;
-	width: 40px;
-	color: #000;
-	position: absolute;
-	top: 0px;
-	text-align: center;
-	text-decoration: none;
-	font: bold 12px Arial, Helvetica, sans-serif;
+    display: block;
+    width: 40px;
+    color: #000;
+    position: absolute;
+    top: 0px;
+    text-align: center;
+    text-decoration: none;
+    font: bold 12px Arial, Helvetica, sans-serif;
 }
 .dock-item img {
-	border: none;
-	margin: 5px 10px 0px;
-	width: 100%;
+    border: none;
+    margin: 5px 10px 0px;
+    width: 100%;
 }
 .dock-item span {
-	display: none;
-	padding-left: 20px;
+    display: none;
+    padding-left: 20px;
 }
 
 /*
  * About
  * */
 #warrentlogo {
-	width: 370px;
-	height: 275px;
-	
-	padding: 48px 3px 3px 3px;
-	margin: 5px;
-	
-	border: 1px solid #EEE;
-	border-radius: 5px 5px 5px 5px;
-	box-shadow: #577AA2 0 0 10px;
+    width: 370px;
+    height: 275px;
+
+    padding: 48px 3px 3px 3px;
+    margin: 5px;
+
+    border: 1px solid #EEE;
+    border-radius: 5px 5px 5px 5px;
+    box-shadow: #577AA2 0 0 10px;
 }
 
 li.logo {
-	display: inline;
-	
-	width: 215px;
-	height: 55px;
-	
-	padding: 48px 3px 3px 3px;
-	margin: 5px;
-	
-	border: 1px solid #EEE;
-	border-radius: 5px 5px 5px 5px;
-	box-shadow: #577AA2 0 0 10px;
+    display: inline;
+
+    width: 215px;
+    height: 55px;
+    
+    padding: 48px 3px 3px 3px;
+    margin: 5px;
+
+    border: 1px solid #EEE;
+    border-radius: 5px 5px 5px 5px;
+    box-shadow: #577AA2 0 0 10px;
 }
 
 .optionsContainer {
-	margin-top: 20px;
+    margin-top: 20px;
 }
