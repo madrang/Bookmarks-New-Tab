@@ -18,7 +18,7 @@ function showPrompt(params = {}) {
     const getInputsFields = function() {
         const inputsElements = $("#dialog").find("input").get();
         return inputsElements.reduce((accumulator, element) => {
-            accumulator[element.name] = $(element).val()
+            accumulator[element.name || element.id] = $(element).val()
             return accumulator;
         }, {});
     };
@@ -28,7 +28,6 @@ function showPrompt(params = {}) {
     return new Promise(function (resolve, reject) {
         const dialog = $("#dialog").dialog({
             modal: true
-            , position: { my: "center", at: "center", of: window }
             , resizable: false
 
             , title: params.title || "Error: Missing Dialog Title!"
@@ -57,6 +56,13 @@ function showPrompt(params = {}) {
                 }
                 //showText: false
             }]
+            , open: function(event, ui) {
+                // Center the dialog within the viewport (i.e. visible area of the screen)
+               let top = Math.max(window.innerHeight / 2 - jQuery(this)[0].offsetHeight / 2, 0);
+               let left = Math.max(window.innerWidth / 2 - jQuery(this)[0].offsetWidth / 2, 0);
+               jQuery(this).parent().css("top", top + "px");
+               jQuery(this).parent().css("left", left + "px");
+            }
             , close: function( event, ui ) {
                 if (wasResolved) {
                     return;
@@ -127,13 +133,17 @@ function initBookmarks() {
                         const obj = inst.get_node(data.reference);
                         const nodeData = obj.data;
 
-                        const create = function(v,m,f) {
-                            if(v !== true || f.newTitle == null || f.newTitle == "") {
+                        const create = function(params) {
+                            if(typeof params !== "object" || params.button !== BUTTON_OK) {
+                                return;
+                            }
+                            const inputs = params.inputs;
+                            if(inputs.newTitle == null || inputs.newTitle == "") {
                                 return;
                             }
 
                             const newBookmark = {
-                                title: f.newTitle
+                                title: inputs.newTitle
                             };
 
                             if(nodeData.chromeNode.url) {
@@ -142,12 +152,15 @@ function initBookmarks() {
                                 newBookmark.parentId = nodeData.chromeNode.id;
                             }
 
-                            if(f.newUrl != null && f.newUrl != "") {
-                                newBookmark.url = normalizeUrl(f.newUrl);
+                            if(inputs.newUrl != null && inputs.newUrl != "") {
+                                newBookmark.url = normalizeUrl(inputs.newUrl);
                             }
 
-                            //TODO use jstree.create_node() instead of refreshTree
-
+                            /* Replace refreshTree by create_node
+                            jstree.create_node(obj, {
+                                // JSON Node
+                            }, "last");
+                            */
                             chrome.bookmarks.create(newBookmark, refreshTree);
                         };
 
@@ -199,14 +212,14 @@ function initBookmarks() {
                     , icon: false
                     , label: "Delete"
                     , action: function (data) {
-                        var inst = $.jstree.reference(data.reference);
-                        var obj = inst.get_node(data.reference);
-                        var nodeData = obj.data;
+                        const inst = $.jstree.reference(data.reference);
+                        const obj = inst.get_node(data.reference);
+                        const nodeData = obj.data;
 
-                        //If childrens Prompt before deleting.
+                        // If childrens Prompt before deleting.
                         if (nodeData.chromeNode.children) {
-                            var delFol = function(e) {
-                                if (e === true) {
+                            const delFol = function(params) {
+                                if(typeof params === "object" && params.button === BUTTON_OK) {
                                     inst.delete_node(obj);
                                 }
                             };
@@ -363,9 +376,21 @@ function initBookmarks() {
 }
 
 function refreshTree () {
-    if(refreshEnabled) {
-        $(".jstree").jstree("refresh");
+    if(!refreshEnabled) {
+        return;
     }
+
+    // Broken ways to refresh a tree...
+    //$(".jstree").jstree("refresh");
+    //$(".jstree").jstree(true).refresh(true, false);
+    /*$(".jstree").each(function() {
+        const tree = $(this).jstree(true);
+        tree.refresh(true, false);
+    });*/
+    //$(".jstree").data("jstree", false).empty().jstree(json);
+
+    // Use reload to keep tree state.
+    window.location.reload();
 }
 
 function bindTreeEvents (tree) {
@@ -397,7 +422,8 @@ function bindTreeEvents (tree) {
 
 function nodeTojsTree(node) {
     const treeNode = {
-        text: node.title
+        id: `${node.id}`
+        , text: node.title
         , data: {
             chromeNode: node
         }
