@@ -58,7 +58,7 @@ function showPrompt(params = {}) {
             }]
             , open: function(event, ui) {
                 // Center the dialog within the viewport (i.e. visible area of the screen)
-               let top = Math.max(window.innerHeight / 2 - jQuery(this)[0].offsetHeight / 2, 0);
+               let top = Math.max(window.scrollY + window.innerHeight / 2 - jQuery(this)[0].offsetHeight / 2, 0);
                let left = Math.max(window.innerWidth / 2 - jQuery(this)[0].offsetWidth / 2, 0);
                jQuery(this).parent().css("top", top + "px");
                jQuery(this).parent().css("left", left + "px");
