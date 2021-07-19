@@ -1,3 +1,5 @@
+"use strict";
+
 $(document).ready(initBookmarks);
 
 jQuery.fn.extend({
@@ -9,9 +11,67 @@ jQuery.fn.extend({
     }
 });
 
-const refreshEnabled = true;
-var btOkCancel = { Ok: true, Cancel: false };
+const BUTTON_OK = "Ok";
+const BUTTON_CANCEL = "Cancel";
 
+function showPrompt(params = {}) {
+    const getInputsFields = function() {
+        const inputsElements = $("#dialog").find("input").get();
+        return inputsElements.reduce((accumulator, element) => {
+            accumulator[element.name] = $(element).val()
+            return accumulator;
+        }, {});
+    };
+    $("#dialog").empty();
+    $("#dialog").html(params.html);
+    let wasResolved = false;
+    return new Promise(function (resolve, reject) {
+        const dialog = $("#dialog").dialog({
+            modal: true
+            , position: { my: "center", at: "center", of: window }
+            , resizable: false
+
+            , title: params.title || "Error: Missing Dialog Title!"
+            , buttons: [{
+                text: "Ok"
+                , icon: "ui-icon-check"
+                , click: function() {
+                    wasResolved = true;
+                    resolve({
+                        button: BUTTON_OK
+                        , inputs: getInputsFields()
+                    });
+                    $(this).dialog("close");
+                }
+                //showText: false
+            }, {
+                text: "Cancel"
+                , icon: "ui-icon-cancel"
+                , click: function() {
+                    wasResolved = true;
+                    resolve({
+                        button: BUTTON_CANCEL
+                        , inputs: getInputsFields()
+                    });
+                    $(this).dialog("close");
+                }
+                //showText: false
+            }]
+            , close: function( event, ui ) {
+                if (wasResolved) {
+                    return;
+                }
+                resolve({
+                    button: null
+                    , inputs: []
+                });
+            }
+        });
+        $("#dialog").dialog("open");
+    });
+}
+
+let refreshEnabled = true;
 function initBookmarks() {
     // If something happend Refresh the Trees
     chrome.bookmarks.onChanged.addListener(refreshTree);
@@ -21,29 +81,35 @@ function initBookmarks() {
     chrome.bookmarks.onMoved.addListener(refreshTree);
     chrome.bookmarks.onRemoved.addListener(refreshTree);
 
-    //Currently not supported.
-    var progressiveRender = false;
-    var progressiveUnload = false;
-
     //Check settings.
     localStorage.jsTree_theme = localStorage.jsTree_theme || "default";
     localStorage.jsTree_FaviconService = localStorage.jsTree_FaviconService || "chrome";
 
-    //Set theme path.
-    jQuery.jstree.THEMES_DIR = "libs/jstree/themes/";
+    const jQuery_ui_styleSheet = window.document.createElement("link");
+    jQuery_ui_styleSheet.type = "text/css"
+    jQuery_ui_styleSheet.rel = "stylesheet";
+    jQuery_ui_styleSheet.href = `/libs/ui-theme/${localStorage.jsTree_theme}/jquery-ui.min.css`;
+    window.document.head.appendChild(jQuery_ui_styleSheet);
 
+    // Common settings for both trees.
     const treeSetup = {
         core: {
             themes: {
                 name: localStorage.jsTree_theme
                 , dots: Boolean(window.localStorage.getItem("jsTree_themeDots"))
-                , stripes: true
-                , url: `/libs/jstree/themes/${localStorage.jsTree_theme || "default"}/style.css`
+                , stripes: Boolean(window.localStorage.getItem("jsTree_themeStripes"))
+                // Set theme path.
+                , url: `/libs/jstree/themes/${localStorage.jsTree_theme}/style.css`
+            }
+            , check_callback: function (op, node, par, pos, more) {
+                if(more && more.dnd) {
+                    return more.pos !== "i" && par.id === node.parent;
+                }
+                return true;
             }
         }
-        , json: {
-            progressive_render: progressiveRender
-            , progressive_unload: progressiveUnload
+        , conditionalselect: function (node, event) {
+            return true;
         }
         , contextmenu: {
             select_node: true
@@ -57,16 +123,16 @@ function initBookmarks() {
                     , icon: false
                     , label: "Create"
                     , action: function (data) {
-                        var inst = $.jstree.reference(data.reference);
-                        var obj = inst.get_node(data.reference);
-                        var nodeData = obj.data;
+                        const inst = $.jstree.reference(data.reference);
+                        const obj = inst.get_node(data.reference);
+                        const nodeData = obj.data;
 
-                        var create = function(v,m,f) {
+                        const create = function(v,m,f) {
                             if(v !== true || f.newTitle == null || f.newTitle == "") {
                                 return;
                             }
 
-                            var newBookmark = {
+                            const newBookmark = {
                                 title: f.newTitle
                             };
 
@@ -85,12 +151,8 @@ function initBookmarks() {
                             chrome.bookmarks.create(newBookmark, refreshTree);
                         };
 
-                        var txt = 'Title:<br />' +
-                            '<input type="text" id="newTitleInput" name="newTitle" /><br />' +
-                            'Url:<br />' +
-                            '<input type="text" id="newUrlInput" name="newUrl" />';
-
-                        $.prompt(txt, { buttons: btOkCancel, callback: create });
+                        const htmlTxt = `Title:<br/><input type="text" id="newTitleInput" name="newTitle" /><br/>Url:<br/><input type="text" id="newUrlInput" name="newUrl" />`;
+                        showPrompt({ html: htmlTxt, }).then(create);
                     }
                 }
                 , rename: {
@@ -100,34 +162,34 @@ function initBookmarks() {
                     , icon: false
                     , label: "Rename"
                     , action: function (data) {
-                        var inst = $.jstree.reference(data.reference);
-                        var obj = inst.get_node(data.reference);
-                        var nodeData = obj.data;
+                        const inst = $.jstree.reference(data.reference);
+                        const obj = inst.get_node(data.reference);
+                        const nodeData = obj.data;
 
-                        var rename = function(v,m,f) {
-                            if(v !== true) {
+                        const rename = function(params) {
+                            if(typeof params !== "object" || params.button !== BUTTON_OK) {
                                 return;
                             }
-                            if(f.newTitle == null) {
-                                f.newTitle = "";
+                            const inputs = params.inputs;
+                            if(inputs.newTitle === null) {
+                                inputs.newTitle = "";
                             }
-                            if (f.newTitle != "") {
-                                inst.rename_node(obj, f.newTitle);
-                                nodeData.chromeNode.title = f.newTitle;
+                            if (inputs.newTitle !== "") {
+                                inst.rename_node(obj, inputs.newTitle);
+                                nodeData.chromeNode.title = inputs.newTitle;
                                 return;
                             }
                             //Allow empty name only for Bookmarks folders.
-                            if (nodeData.chromeNode.url != "") {
+                            if (nodeData.chromeNode.url !== "") {
                                 inst.rename_node(obj, nodeData.chromeNode.url);
-                                nodeData.chromeNode.title = f.newTitle;
+                                nodeData.chromeNode.title = inputs.newTitle;
                                 return;
                             }
                             //Can't rename node.
                             //TODO Warn the user.
-                            return;
                         };
                         const htmlTxt = `Title:<br /><input type="text" id="newTitleInput" name="newTitle" value="${nodeData.chromeNode.title}" style="width:100%" />`;
-                        $.prompt(htmlTxt, { buttons: btOkCancel, callback: rename });
+                        showPrompt({ html: htmlTxt, }).then(rename);
                     }
                 }
                 , remove: {
@@ -148,9 +210,7 @@ function initBookmarks() {
                                     inst.delete_node(obj);
                                 }
                             };
-                            $.prompt('Do you want to delete "' + nodeData.chromeNode.title + '" ?'
-                                , { buttons: btOkCancel, callback: delFol }
-                            );
+                            showPrompt({ html: `Do you want to delete "${nodeData.chromeNode.title}" ?`, }).then(delFol);
                         } else {
                             inst.delete_node(obj);
                         }
@@ -232,7 +292,7 @@ function initBookmarks() {
             , "themes"
             , "ui"
 
-            , "json"
+            , "conditionalselect"
             , "state"
 
             , "contextmenu"
@@ -300,7 +360,6 @@ function initBookmarks() {
     $("#jstree-div a").live("dblclick", function (e) {
         dbClickNode(e);
     });
-
 }
 
 function refreshTree () {
@@ -326,12 +385,13 @@ function bindTreeEvents (tree) {
 
     //Override check function
     let ins = $.jstree.reference(tree);
-    let oldCheck = ins.check;
-    ins.check = function (checking, obj, parent, index) {
-        if(!oldCheck.call(this, checking, obj, parent, index)) {
-            return false;
+    const oldCheck = ins.check;
+    ins.check = function (...args) {
+        const checkResult = oldCheck.apply(this, args);
+        if(!checkResult) {
+            return checkResult;
         }
-        return checkNode.call(this, checking, obj, parent, index);
+        return checkNode.apply(this, args);
     }
 }
 
@@ -389,13 +449,16 @@ function nodeTojsTree(node) {
 
 function normalizeUrl(url) {
     if (!url.match(/^https?:\/\//)) {
-        return 'http://' + url;
+        return "http://" + url;
     } else {
         return url;
     }
 }
 
-function checkNode (checking, obj, parent, index) {
+function checkNode (checking, mainNode, parentNode, index, optNode) {
+    const inst = $.jstree.reference(mainNode);
+    mainNode = inst.get_node(mainNode);
+    const nodeData = mainNode.data;
     switch(checking) {
         case "create_node":
             break;
@@ -403,9 +466,13 @@ function checkNode (checking, obj, parent, index) {
             break;
         case "move_node":
             //Dont allow moving outside the folders
-            if(parent === -1) { return false; }
+            if(!optNode || optNode === -1) {
+                return false;
+            }
             //Dont allow moving inside a bookmark
-            if(parent.data.chromeNode.url) { return false; }
+            if(optNode.ref.data.chromeNode.url) {
+                return false;
+            }
             break;
         case "copy_node":
             break;
@@ -417,27 +484,37 @@ function checkNode (checking, obj, parent, index) {
 
 function moveNode (e, data) {
     const dest = {
-        parentId: data.rslt.parent.data.chromeNode.id,
-        index: data.rslt.position
+        parentId: data.node.parent.data.chromeNode.id
+        , index: data.node.position
     };
     refreshEnabled = false;
-    chrome.bookmarks.move(data.rslt.obj.data.chromeNode.id, dest, function(){ refreshEnabled = true; });
+    chrome.bookmarks.move(data.node.data.chromeNode.id, dest
+        , function() {
+            refreshEnabled = true;
+        }
+    );
 }
 
 function renameNode (e, data) {
-    const nodeData = data.rslt.obj.data;
+    const nodeData = data.node.data;
     const changes = {
-        title: data.rslt.title
+        title: data.node.text
     };
     refreshEnabled = false;
-    chrome.bookmarks.update(nodeData.chromeNode.id, changes, function(){ refreshEnabled = true; });
+    chrome.bookmarks.update(nodeData.chromeNode.id, changes
+        , function() {
+            refreshEnabled = true;
+        }
+    );
 }
 
 function deleteNode (e, data) {
-    const nodeData = data.rslt.obj.data;
+    const nodeData = data.node.data;
     refreshEnabled = false;
 
-    const enableRefresh = function() { refreshEnabled = true; };
+    const enableRefresh = function() {
+        refreshEnabled = true;
+    };
     if (nodeData.chromeNode.children) {
         chrome.bookmarks.removeTree(nodeData.chromeNode.id, enableRefresh);
     } else {
@@ -445,7 +522,7 @@ function deleteNode (e, data) {
     }
 }
 
-function dbClickNode (e) {
+function dbClickNode (e, data) {
     const inst = $.jstree.reference(e.reference || e.target);
     const obj = inst.get_node(e.reference || e.target);
     const nodeData = obj.data;
