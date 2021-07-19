@@ -58,10 +58,10 @@ function showPrompt(params = {}) {
             }]
             , open: function(event, ui) {
                 // Center the dialog within the viewport (i.e. visible area of the screen)
-               let top = Math.max(window.scrollY + window.innerHeight / 2 - jQuery(this)[0].offsetHeight / 2, 0);
-               let left = Math.max(window.innerWidth / 2 - jQuery(this)[0].offsetWidth / 2, 0);
-               jQuery(this).parent().css("top", top + "px");
-               jQuery(this).parent().css("left", left + "px");
+                let top = Math.max(window.scrollY + window.innerHeight / 2 - jQuery(this)[0].offsetHeight / 2, 0);
+                let left = Math.max(window.innerWidth / 2 - jQuery(this)[0].offsetWidth / 2, 0);
+                jQuery(this).parent().css("top", top + "px");
+                jQuery(this).parent().css("left", left + "px");
             }
             , close: function( event, ui ) {
                 if (wasResolved) {
@@ -107,10 +107,28 @@ function initBookmarks() {
                 // Set theme path.
                 , url: `/libs/jstree/themes/${localStorage.jsTree_theme}/style.css`
             }
-            , check_callback: function (op, node, par, pos, more) {
-                if(more && more.dnd) {
-                    return more.pos !== "i" && par.id === node.parent;
-                }
+            , check_callback: function (operation, node, parent, position, more) {
+                const inst = $.jstree.reference(node);
+                node = inst.get_node(node);
+                const nodeData = node.data;
+                switch(operation) {
+                    case "create_node":
+                        break;
+                    case "rename_node":
+                        break;
+                    case "move_node":
+                        if(typeof more === "object" && more.dnd && typeof more.ref === "object") {
+                            if(more.pos === "i" && more.ref.data.chromeNode.url) {
+                                // Dont allow moving inside a bookmark
+                                return false;
+                            }
+                        }
+                        break;
+                    case "copy_node":
+                        break;
+                    case "delete_node":
+                        break;
+                    }
                 return true;
             }
         }
@@ -407,17 +425,6 @@ function bindTreeEvents (tree) {
         e.reference = this;
         dbClickNode(e);
     });
-
-    //Override check function
-    let ins = $.jstree.reference(tree);
-    const oldCheck = ins.check;
-    ins.check = function (...args) {
-        const checkResult = oldCheck.apply(this, args);
-        if(!checkResult) {
-            return checkResult;
-        }
-        return checkNode.apply(this, args);
-    }
 }
 
 function nodeTojsTree(node) {
@@ -481,37 +488,12 @@ function normalizeUrl(url) {
     }
 }
 
-function checkNode (checking, mainNode, parentNode, index, optNode) {
-    const inst = $.jstree.reference(mainNode);
-    mainNode = inst.get_node(mainNode);
-    const nodeData = mainNode.data;
-    switch(checking) {
-        case "create_node":
-            break;
-        case "rename_node":
-            break;
-        case "move_node":
-            //Dont allow moving outside the folders
-            if(!optNode || optNode === -1) {
-                return false;
-            }
-            //Dont allow moving inside a bookmark
-            if(optNode.ref.data.chromeNode.url) {
-                return false;
-            }
-            break;
-        case "copy_node":
-            break;
-        case "delete_node":
-            break;
-        }
-    return true;
-}
-
 function moveNode (e, data) {
+    const parentNode = data.instance.get_node(data.node.parent);
+    const pos = $.inArray(data.node.id, parentNode.children)
     const dest = {
-        parentId: data.node.parent.data.chromeNode.id
-        , index: data.node.position
+        parentId: parentNode.data.chromeNode.id
+        , index: pos
     };
     refreshEnabled = false;
     chrome.bookmarks.move(data.node.data.chromeNode.id, dest
