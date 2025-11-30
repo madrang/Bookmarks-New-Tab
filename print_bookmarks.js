@@ -427,6 +427,13 @@ function bindTreeEvents (tree) {
     });
 }
 
+function faviconURL(u) {
+    const url = new URL(chrome.runtime.getURL("/_favicon/"));
+    url.searchParams.set("pageUrl", u);
+    url.searchParams.set("size", "16");
+    return url.toString();
+}
+
 function nodeTojsTree(node) {
     const treeNode = {
         id: `${node.id}`
@@ -446,10 +453,10 @@ function nodeTojsTree(node) {
 
         switch(localStorage.jsTree_FaviconService) {
         case "chrome":
-            treeNode.icon = "chrome://favicon/" + node.url;
+            treeNode.icon = faviconURL(node.url);
             break;
         case "google":
-            treeNode.icon = "https://www.google.com/s2/favicons?domain=" + node.url;
+            treeNode.icon = `https://www.google.com/s2/favicons?domain=${node.url}`;
             break;
         default:
             treeNode.icon = localStorage.jsTree_FaviconService + node.url;
